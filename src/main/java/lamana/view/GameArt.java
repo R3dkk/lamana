@@ -18,6 +18,7 @@ import java.util.Map;
 /** Shared art helpers. PNGs in resources/assets override the built-in vector art. */
 final class GameArt {
     private static final Map<String, BufferedImage> IMAGE_CACHE = new HashMap<>();
+    private static final Map<String, BufferedImage[]> FRAME_CACHE = new HashMap<>();
     private GameArt() {}
 
     static String assetKey(String value) {
@@ -31,11 +32,14 @@ final class GameArt {
     }
 
     static void drawAnimal(Graphics2D source, Animal animal, int centerX, int groundY,
-                           int height, boolean playerSide) {
+                           int height, boolean playerSide, String action, int animationFrame) {
         Graphics2D g = (Graphics2D) source.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         String key = assetKey(animal.getName());
-        BufferedImage image = image("/assets/units/" + key + ".png");
+        String folder = key.equals("kurakura") ? "kura-kura" : key;
+        BufferedImage image = spriteFrame("/assets/units/" + folder + "/" + action + ".png",
+                animationFrame, 4);
+        if (image == null) image = image("/assets/units/" + key + ".png");
         double aspect = image == null ? 1.35 : (double) image.getWidth() / image.getHeight();
         int spriteWidth = Math.max(height / 2, Math.min((int) (height * 1.75), (int) (height * aspect)));
         Color faction = playerSide ? new Color(92, 203, 233) : new Color(248, 127, 105);
@@ -53,6 +57,22 @@ final class GameArt {
         g.setStroke(new BasicStroke(2f));
         g.drawLine(centerX - spriteWidth / 4, groundY + 3, centerX + spriteWidth / 4, groundY + 3);
         g.dispose();
+    }
+
+    private static BufferedImage spriteFrame(String path, int frame, int frameCount) {
+        BufferedImage sheet = image(path);
+        if (sheet == null) return null;
+        BufferedImage[] frames = FRAME_CACHE.get(path);
+        if (frames == null) {
+            frames = new BufferedImage[frameCount];
+            for (int i = 0; i < frameCount; i++) {
+                int left = i * sheet.getWidth() / frameCount;
+                int right = (i + 1) * sheet.getWidth() / frameCount;
+                frames[i] = sheet.getSubimage(left, 0, right - left, sheet.getHeight());
+            }
+            FRAME_CACHE.put(path, frames);
+        }
+        return frames[Math.floorMod(frame, frames.length)];
     }
 
     static void drawCardSprite(Graphics2D source, Animal animal, int x, int y, int width, int height) {

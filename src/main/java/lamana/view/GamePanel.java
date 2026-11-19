@@ -20,13 +20,20 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /** Responsive Java2D battle lane with built-in art and optional resource images. */
 public class GamePanel extends JPanel {
     private static final BufferedImage ARENA_IMAGE = loadArenaImage();
+    private static final long ANIMATION_FRAME_MS = 110L;
+    private static final long ACTION_ANIMATION_MS = ANIMATION_FRAME_MS * 4L;
 
     private GameController game;
     private boolean paused;
+    private long animationTimeMs;
+    private final Map<Animal, UnitVisual> unitVisuals = new IdentityHashMap<>();
 
     public GamePanel(GameController game) {
         this.game = game;
@@ -38,12 +45,18 @@ public class GamePanel extends JPanel {
     public void setGame(GameController game) {
         this.game = game;
         this.paused = false;
+        this.animationTimeMs = 0;
+        this.unitVisuals.clear();
         repaint();
     }
 
     public void setPaused(boolean paused) {
         this.paused = paused;
         repaint();
+    }
+
+    public void advanceAnimation(long deltaMs) {
+        if (!paused && deltaMs > 0) animationTimeMs += deltaMs;
     }
 
     @Override
@@ -234,19 +247,65 @@ public class GamePanel extends JPanel {
         List<Animal> playerUnits = game.getBattleLane().getPlayerAnimals();
         List<Animal> enemyUnits = game.getBattleLane().getEnemyAnimals();
         int groundY = top + 90;
-        for (Animal animal : enemyUnits) {
-            int x = laneLeft + (int) (laneWidth * animal.getPosition() / GameConfig.LANE_LENGTH);
-            drawUnit(g, animal, x, groundY, size, false);
+        Map<Animal, Boolean> active = new IdentityHashMap<>();
+        for (Animal animal : playerUnits) registerActiveUnit(animal, true, active);
+        for (Animal animal : enemyUnits) registerActiveUnit(animal, false, active);
+
+        Iterator<Map.Entry<Animal, UnitVisual>> iterator = unitVisuals.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Animal, UnitVisual> entry = iterator.next();
+            UnitVisual visual = entry.getValue();
+            if (!active.containsKey(entry.getKey()) && !visual.dead) {
+                visual.dead = true;
+                visual.action = "mati";
+                visual.actionStartedMs = animationTimeMs;
+            }
+            if (visual.dead && animationTimeMs - visual.actionStartedMs >= ACTION_ANIMATION_MS) {
+                iterator.remove();
+            }
         }
-        for (Animal animal : playerUnits) {
-            int x = laneLeft + (int) (laneWidth * animal.getPosition() / GameConfig.LANE_LENGTH);
-            drawUnit(g, animal, x, groundY - 4, size, true);
+
+        for (Animal animal : enemyUnits) drawVisual(g, animal, unitVisuals.get(animal), laneLeft, laneWidth, groundY, size);
+        for (Animal animal : playerUnits) drawVisual(g, animal, unitVisuals.get(animal), laneLeft, laneWidth, groundY - 4, size);
+        for (Map.Entry<Animal, UnitVisual> entry : unitVisuals.entrySet()) {
+            if (entry.getValue().dead) drawVisual(g, entry.getKey(), entry.getValue(), laneLeft, laneWidth, groundY, size);
         }
     }
 
-    private static void drawUnit(Graphics2D g, Animal animal, int x, int groundY, int size, boolean playerSide) {
+    private void registerActiveUnit(Animal animal, boolean playerSide, Map<Animal, Boolean> active) {
+        active.put(animal, Boolean.TRUE);
+        UnitVisual visual = unitVisuals.get(animal);
+        if (visual == null) {
+            visual = new UnitVisual(playerSide, animal.getPosition(), "spawn", animationTimeMs);
+            unitVisuals.put(animal, visual);
+        } else {
+            visual.position = animal.getPosition();
+            visual.playerSide = playerSide;
+            String nextAction = animationTimeMs - visual.actionStartedMs < ACTION_ANIMATION_MS
+                    && visual.action.equals("spawn") ? "spawn"
+                    : (animal.isAttackingAnimation() ? "serang" : "jalan");
+            if (!nextAction.equals(visual.action)) {
+                visual.action = nextAction;
+                visual.actionStartedMs = animationTimeMs;
+            }
+        }
+    }
+
+    private void drawVisual(Graphics2D g, Animal animal, UnitVisual visual,
+                            int laneLeft, int laneWidth, int groundY, int size) {
+        if (visual == null) return;
+        int x = laneLeft + (int) (laneWidth * visual.position / GameConfig.LANE_LENGTH);
+        int frame = visual.action.equals("jalan")
+                ? (int) ((animationTimeMs / ANIMATION_FRAME_MS) % 4L)
+                : (int) Math.min(3, Math.max(0, (animationTimeMs - visual.actionStartedMs) / ANIMATION_FRAME_MS));
+        drawUnit(g, animal, x, groundY, size, visual.playerSide, visual.action, frame);
+    }
+
+    private void drawUnit(Graphics2D g, Animal animal, int x, int groundY, int size,
+                          boolean playerSide, String action, int animationFrame) {
         int barWidth = size + 7;
-        GameArt.drawAnimal(g, animal, x, groundY, size, playerSide);
+        GameArt.drawAnimal(g, animal, x, groundY, size, playerSide, action, animationFrame);
+        if (action.equals("mati")) return;
         g.setColor(new Color(15, 31, 35, 220));
         g.fillRoundRect(x - barWidth / 2, groundY - size - 9, barWidth, 5, 4, 4);
         int fillWidth = (int) Math.round((double) animal.getHp() / animal.getMaxHp() * barWidth);
@@ -260,6 +319,21 @@ public class GamePanel extends JPanel {
         g.fillRoundRect(x - textWidth / 2, groundY + 3, textWidth, 14, 6, 6);
         g.setColor(Color.WHITE);
         g.drawString(name, x - metrics.stringWidth(name) / 2, groundY + 13);
+    }
+
+    private static final class UnitVisual {
+        private boolean playerSide;
+        private double position;
+        private String action;
+        private long actionStartedMs;
+        private boolean dead;
+
+        UnitVisual(boolean playerSide, double position, String action, long actionStartedMs) {
+            this.playerSide = playerSide;
+            this.position = position;
+            this.action = action;
+            this.actionStartedMs = actionStartedMs;
+        }
     }
 
     private void drawGameOverOverlay(Graphics2D g, int width, int height) {

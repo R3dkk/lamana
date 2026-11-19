@@ -66,10 +66,12 @@ public class BattleLane {
         for (Animal a : playerUnits) {
             a.advanceStun(deltaTimeMillis);
             a.advanceCooldown(deltaTimeMillis);
+            a.advanceAttackAnimation(deltaTimeMillis);
         }
         for (Animal a : enemyUnits) {
             a.advanceStun(deltaTimeMillis);
             a.advanceCooldown(deltaTimeMillis);
+            a.advanceAttackAnimation(deltaTimeMillis);
         }
 
         // 2. Pergerakan unit dengan delta time & spacing
@@ -255,6 +257,7 @@ public class BattleLane {
                 if (dist <= attacker.getEffectiveRange()) {
                     if (attacker.attack(targetAnimal, dist, playerCtx)) {
                         attacker.consumeAttack();
+                        attacker.triggerAttackAnimation(440L);
                     }
                 }
             } else {
@@ -262,6 +265,7 @@ public class BattleLane {
                 if (distToBase <= attacker.getEffectiveRange()) {
                     if (attacker.attack(enemyBase, distToBase, playerCtx)) {
                         attacker.consumeAttack();
+                        attacker.triggerAttackAnimation(440L);
                     }
                 }
             }
@@ -278,6 +282,7 @@ public class BattleLane {
                 if (dist <= attacker.getEffectiveRange()) {
                     if (attacker.attack(targetAnimal, dist, enemyCtx)) {
                         attacker.consumeAttack();
+                        attacker.triggerAttackAnimation(440L);
                     }
                 }
             } else {
@@ -285,6 +290,7 @@ public class BattleLane {
                 if (distToBase <= attacker.getEffectiveRange()) {
                     if (attacker.attack(playerBase, distToBase, enemyCtx)) {
                         attacker.consumeAttack();
+                        attacker.triggerAttackAnimation(440L);
                     }
                 }
             }

@@ -60,8 +60,8 @@ java -cp target\classes lamana.Main
 
 Layar game menampilkan arena yang mengikuti ukuran jendela, markas dan HP kedua tim,
 antrean spawn, resource, serta kartu pasukan lengkap dengan statistik dan ability.
-Gunakan **Jeda/Lanjutkan**, **Mulai ulang**, dan pilihan kesulitan AI untuk mencoba
-mekanik pertandingan.
+Simulasi berjalan pada kecepatan tetap 0.5×. Gunakan **Jeda/Lanjutkan**,
+**Mulai ulang**, dan pilihan kesulitan AI untuk mencoba mekanik pertandingan.
 
 PNG contoh untuk arena, markas, dan tiga unit Era 1 tersedia di
 `src/main/resources/assets/`. Sprite unit transparan dirender sebagai model 2D
@@ -73,6 +73,10 @@ unit di lokasi yang sama untuk memasang aset buatan tim:
 | Latar arena | `assets/background/arena.png` |
 | Unit | `assets/units/ayam.png`, `landak.png`, `kurakura.png`, `harimau.png`, `monyet.png`, `badak.png`, `godzilla.png`, `naga.png`, `centaur.png` |
 | Markas | `assets/buildings/player-base.png`, `enemy-base.png` |
+
+Folder `ayam/`, `kura-kura/`, dan `landak/` berisi sprite sheet horizontal empat
+frame untuk aksi `jalan`, `serang`, `mati`, dan `spawn`. GUI memilih animasi dari
+aksi unit di battle lane; animasi berjalan saat game aktif dan berhenti saat dijeda.
 
 Nama file enam unit era berikutnya sudah dicantumkan pada tabel dan otomatis dibaca
 saat ditambahkan. Jika PNG belum ada atau gagal dibaca, GUI memakai bentuk 2D fallback.

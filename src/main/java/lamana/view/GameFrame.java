@@ -213,7 +213,12 @@ public class GameFrame extends JFrame {
             long now = System.nanoTime();
             long deltaMs = Math.max(0, (now - lastFrameNanos) / 1_000_000L);
             lastFrameNanos = now;
-            if (!paused) game.update(deltaMs);
+            if (!paused) {
+                long simulationDeltaMs = Math.max(0,
+                        Math.round(deltaMs * GameConfig.GAME_SPEED_MULTIPLIER));
+                game.update(simulationDeltaMs);
+                gamePanel.advanceAnimation(simulationDeltaMs);
+            }
             refresh();
             gamePanel.repaint();
         });

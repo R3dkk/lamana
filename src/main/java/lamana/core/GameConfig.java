@@ -38,6 +38,7 @@ public final class GameConfig {
     public static final int WINDOW_WIDTH = 1440;
     public static final int WINDOW_HEIGHT = 900;
     public static final int GAME_LOOP_MS = 16;
+    public static final double GAME_SPEED_MULTIPLIER = 0.5;
 
     public static final long MELEE_ATTACK_COOLDOWN_MS = 1000L;
     public static final long RANGED_ATTACK_COOLDOWN_MS = 1200L;

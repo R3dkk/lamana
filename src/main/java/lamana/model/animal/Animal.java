@@ -27,6 +27,7 @@ public abstract class Animal implements Attackable {
     // Per-unit attack cooldown (Polymorphism proof: tidak ada global timer)
     private long attackCooldownMs;
     private long attackTimerMs;
+    private long attackAnimationRemainingMs;
     // Efek status
     private long stunRemainingMs;
 
@@ -61,6 +62,7 @@ public abstract class Animal implements Attackable {
         this.rewardExp = rewardExp;
         this.attackCooldownMs = attackCooldownMs;
         this.attackTimerMs = attackCooldownMs; // siap serang dari awal
+        this.attackAnimationRemainingMs = 0;
         this.stunRemainingMs = 0;
     }
 
@@ -110,6 +112,13 @@ public abstract class Animal implements Attackable {
     public boolean isReadyToAttack() { return attackTimerMs >= attackCooldownMs; }
     public void consumeAttack() { attackTimerMs = 0; }
     public long getAttackCooldownMs() { return attackCooldownMs; }
+    public boolean isAttackingAnimation() { return attackAnimationRemainingMs > 0; }
+    public void triggerAttackAnimation(long durationMs) {
+        attackAnimationRemainingMs = Math.max(attackAnimationRemainingMs, durationMs);
+    }
+    public void advanceAttackAnimation(long deltaMs) {
+        attackAnimationRemainingMs = Math.max(0, attackAnimationRemainingMs - deltaMs);
+    }
 
     /**
      * POLYMORPHISM RUNTIME — wajib override di setiap subclass konkret.

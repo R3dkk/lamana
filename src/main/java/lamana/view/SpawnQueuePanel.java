@@ -57,14 +57,13 @@ public class SpawnQueuePanel extends JPanel {
         JPanel progressPanel = new JPanel(new BorderLayout(0, 2));
         progressPanel.setOpaque(false);
         progressPanel.setPreferredSize(new Dimension(145, 38));
-        JLabel cooldownLabel = new JLabel("COOLDOWN", SwingConstants.CENTER);
+        JLabel cooldownLabel = new JLabel("PROGRES SPAWN", SwingConstants.CENTER);
         cooldownLabel.setForeground(new Color(205, 205, 215));
         cooldownLabel.setFont(new Font("Arial", Font.BOLD, 9));
         progressPanel.add(cooldownLabel, BorderLayout.NORTH);
 
         cooldownBar = new JProgressBar(0, 1000);
-        cooldownBar.setStringPainted(true);
-        cooldownBar.setString("Siap");
+        cooldownBar.setStringPainted(false);
         cooldownBar.setForeground(new Color(50, 160, 220));
         cooldownBar.setBackground(new Color(55, 55, 72));
         progressPanel.add(cooldownBar, BorderLayout.CENTER);
@@ -92,11 +91,8 @@ public class SpawnQueuePanel extends JPanel {
 
         if (queue.isEmpty()) {
             cooldownBar.setValue(0);
-            cooldownBar.setString("Siap");
         } else {
             cooldownBar.setValue((int) Math.round(game.getPlayerSpawnCooldownProgress() * 1000));
-            double secondsRemaining = game.getPlayerSpawnCooldownRemainingMs() / 1000.0;
-            cooldownBar.setString(String.format(java.util.Locale.ROOT, "%.1fs", secondsRemaining));
         }
     }
 }
