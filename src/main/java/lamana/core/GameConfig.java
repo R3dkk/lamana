@@ -32,8 +32,8 @@ public final class GameConfig {
     public static final int EXP_FOR_LEVEL_2 = 100;
     public static final int EXP_FOR_LEVEL_3 = 200;
 
-    public static final int WINDOW_WIDTH = 900;
-    public static final int WINDOW_HEIGHT = 620;
+    public static final int WINDOW_WIDTH = 1920;
+    public static final int WINDOW_HEIGHT = 1080;
     public static final int GAME_LOOP_MS = 16;
 
     public static final long MELEE_ATTACK_COOLDOWN_MS = 1000L;

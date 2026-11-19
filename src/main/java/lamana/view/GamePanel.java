@@ -16,14 +16,14 @@ import java.util.List;
  */
 public class GamePanel extends JPanel {
 
-    private static final int PANEL_WIDTH  = 900;
-    private static final int PANEL_HEIGHT = 360;
+    private static final int PANEL_WIDTH  = GameConfig.WINDOW_WIDTH;
+    private static final int PANEL_HEIGHT = GameConfig.WINDOW_HEIGHT - 260; // sisakan ruang HUD + south panel
 
     // Arena lane bounds
-    private static final int LANE_LEFT   = 80;
-    private static final int LANE_TOP    = 140;
-    private static final int LANE_WIDTH  = 740;
-    private static final int LANE_HEIGHT = 80;
+    private static final int LANE_LEFT   = 120;
+    private static final int LANE_TOP    = 320;
+    private static final int LANE_WIDTH  = 1680;
+    private static final int LANE_HEIGHT = 120;
 
     // Unit drawing
     private static final int UNIT_RADIUS = 18;
