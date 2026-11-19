@@ -56,6 +56,27 @@ javac -d target\classes $sources
 java -cp target\classes lamana.Main
 ```
 
+### GUI dan aset
+
+Layar game menampilkan arena yang mengikuti ukuran jendela, markas dan HP kedua tim,
+antrean spawn, resource, serta kartu pasukan lengkap dengan statistik dan ability.
+Gunakan **Jeda/Lanjutkan**, **Mulai ulang**, dan pilihan kesulitan AI untuk mencoba
+mekanik pertandingan.
+
+PNG contoh untuk arena, markas, dan tiga unit Era 1 tersedia di
+`src/main/resources/assets/`. Sprite unit transparan dirender sebagai model 2D
+tampak samping; kartu pasukan memakai PNG yang sama sebagai preview. Ganti file
+unit di lokasi yang sama untuk memasang aset buatan tim:
+
+| Aset | Lokasi resource |
+|------|-----------------|
+| Latar arena | `assets/background/arena.png` |
+| Unit | `assets/units/ayam.png`, `landak.png`, `kurakura.png`, `harimau.png`, `monyet.png`, `badak.png`, `godzilla.png`, `naga.png`, `centaur.png` |
+| Markas | `assets/buildings/player-base.png`, `enemy-base.png` |
+
+Nama file enam unit era berikutnya sudah dicantumkan pada tabel dan otomatis dibaca
+saat ditambahkan. Jika PNG belum ada atau gagal dibaca, GUI memakai bentuk 2D fallback.
+
 ---
 
 ## 3. Tema Karakter: Fauna Indonesia 🇮🇩
@@ -135,10 +156,12 @@ lamana/
 ├── factory/
 │   └── UnitFactory.java             (Creational Pattern & Overloading)
 └── view/                            <-- Presentasi GUI Swing & Java2D
-    ├── GameFrame.java               (Window utama 900x620)
-    ├── GamePanel.java               (Canvas render arena, base, HP bar)
-    ├── HUDPanel.java                (Panel atas: HP markas, Gold, EXP, status)
-    └── UnitCard.java                (Tombol spawn pintar dengan auto-disable)
+    ├── GameFrame.java               (Window utama, kontrol pertandingan)
+    ├── GamePanel.java               (Arena responsif dan render pasukan)
+    ├── GameArt.java                 (Pemuatan PNG dan ilustrasi fallback)
+    ├── HUDPanel.java                (HP markas, Gold, EXP, progres upgrade)
+    ├── SpawnQueuePanel.java         (Antrean spawn dan cooldown)
+    └── UnitCard.java                (Tombol spawn dengan statistik dan ability)
 ```
 
 ---

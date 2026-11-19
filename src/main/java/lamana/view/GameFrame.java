@@ -1,22 +1,5 @@
 package lamana.view;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.Timer;
-
 import lamana.ai.EnemyDifficulty;
 import lamana.controller.GameController;
 import lamana.core.GameConfig;
@@ -25,113 +8,193 @@ import lamana.factory.UnitFactory;
 import lamana.model.animal.Animal;
 import lamana.model.building.Base;
 
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.List;
+
+/** Main battle screen for Animal War. */
 public class GameFrame extends JFrame {
-    private final GameController game;
+    private static final Color BACKGROUND = new Color(12, 25, 36);
+    private static final Color PANEL = new Color(17, 32, 45);
+
+    private GameController game;
     private final HUDPanel hudPanel;
     private final SpawnQueuePanel spawnQueuePanel;
     private final GamePanel gamePanel;
     private final List<UnitCard> unitCards = new ArrayList<>();
     private final JButton upgradeButton;
+    private final JButton pauseButton;
+    private final JButton restartButton;
+    private final JComboBox<String> difficultyBox;
     private final JPanel cardsGrid;
+    private Timer gameTimer;
+    private boolean paused;
     private long lastFrameNanos = System.nanoTime();
 
     public GameFrame() {
-        super("Animal War — 2D Strategy Battle Game (OOP Final Project)");
-        this.game = new GameController();
-        this.hudPanel = new HUDPanel();
-        this.spawnQueuePanel = new SpawnQueuePanel();
-        this.gamePanel = new GamePanel(game);
-        this.upgradeButton = new JButton("Upgrade Base");
-        this.cardsGrid = new JPanel(new GridLayout(1, 3, 6, 6));
+        super("Animal War | Nusantara Frontline");
+        game = new GameController();
+        hudPanel = new HUDPanel();
+        spawnQueuePanel = new SpawnQueuePanel();
+        gamePanel = new GamePanel(game);
+        upgradeButton = new JButton();
+        pauseButton = new JButton("Jeda");
+        restartButton = new JButton("Mulai ulang");
+        difficultyBox = new JComboBox<>(new String[]{"Easy", "Normal", "Hard"});
+        cardsGrid = new JPanel(new GridLayout(1, 3, 10, 0));
 
         setupUI();
-        updateUnitCards(); // Panggil pertama kali saat startup
+        updateUnitCards();
         startGameLoop();
     }
 
     private void setupUI() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout(0, 0));
+        JPanel root = new JPanel(new BorderLayout(0, 0));
+        root.setBackground(BACKGROUND);
+        setContentPane(root);
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(hudPanel, BorderLayout.NORTH);
-        topPanel.add(spawnQueuePanel, BorderLayout.SOUTH);
-        add(topPanel, BorderLayout.NORTH);
-        add(gamePanel, BorderLayout.CENTER);
+        JPanel top = new JPanel(new BorderLayout(0, 2));
+        top.setBackground(BACKGROUND);
+        top.add(makeMasthead(), BorderLayout.NORTH);
+        top.add(hudPanel, BorderLayout.CENTER);
+        top.add(spawnQueuePanel, BorderLayout.SOUTH);
+        root.add(top, BorderLayout.NORTH);
+        root.add(gamePanel, BorderLayout.CENTER);
+        root.add(makeCommandPanel(), BorderLayout.SOUTH);
 
-        JPanel southPanel = new JPanel(new BorderLayout(6, 6));
-        southPanel.setBorder(BorderFactory.createEmptyBorder(6, 8, 8, 8));
-        southPanel.setBackground(new Color(30, 30, 45));
-
-        cardsGrid.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(80, 80, 110)),
-                "SPAWN UNIT (ERA SAAT INI)",
-                0, 0, new Font("Arial", Font.BOLD, 11), Color.WHITE));
-        cardsGrid.setBackground(new Color(30, 30, 45));
-        southPanel.add(cardsGrid, BorderLayout.CENTER);
-
-        // Panel Bawah: Upgrade + Difficulty selector
-        JPanel bottomControls = new JPanel(new GridLayout(1, 2, 10, 0));
-        bottomControls.setBackground(new Color(30, 30, 45));
-
-        upgradeButton.setFont(new Font("Arial", Font.BOLD, 12));
-        upgradeButton.setBackground(new Color(40, 140, 60));
-        upgradeButton.setForeground(Color.WHITE);
-        upgradeButton.setFocusPainted(false);
-        upgradeButton.addActionListener(e -> {
-            if (game.upgradePlayerBase()) {
-                updateUnitCards(); // Refresh tombol saat naik level
-            }
-            refresh();
-        });
-        bottomControls.add(upgradeButton);
-
-        // ComboBox Difficulty
-        String[] diffs = {"Easy", "Normal", "Hard"};
-        JComboBox<String> diffBox = new JComboBox<>(diffs);
-        diffBox.setSelectedItem("Normal");
-        diffBox.addActionListener(e -> {
-            String selected = (String) diffBox.getSelectedItem();
-            if (selected != null) {
-                game.getEnemyAI().setDifficulty(EnemyDifficulty.valueOf(selected.toUpperCase()));
-            }
-        });
-
-        JPanel diffPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        diffPanel.setBackground(new Color(30, 30, 45));
-        JLabel diffLabel = new JLabel("Enemy Difficulty: ");
-        diffLabel.setForeground(Color.WHITE);
-        diffLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        diffPanel.add(diffLabel);
-        diffPanel.add(diffBox);
-        bottomControls.add(diffPanel);
-
-        southPanel.add(bottomControls, BorderLayout.SOUTH);
-        add(southPanel, BorderLayout.SOUTH);
-
-        pack();
-        setMinimumSize(new Dimension(GameConfig.WINDOW_WIDTH, GameConfig.WINDOW_HEIGHT));
+        setMinimumSize(new Dimension(1030, 720));
         setSize(GameConfig.WINDOW_WIDTH, GameConfig.WINDOW_HEIGHT);
         setLocationRelativeTo(null);
         setVisible(true);
+        addWindowListener(new WindowAdapter() {
+            @Override public void windowClosed(WindowEvent e) {
+                if (gameTimer != null) gameTimer.stop();
+            }
+        });
+    }
+
+    private JPanel makeMasthead() {
+        JPanel masthead = new JPanel(new BorderLayout());
+        masthead.setBackground(BACKGROUND);
+        masthead.setBorder(BorderFactory.createEmptyBorder(14, 20, 11, 20));
+
+        JPanel brand = new JPanel(new BorderLayout(11, 0));
+        brand.setOpaque(false);
+        JLabel mark = new JLabel("AW", SwingConstants.CENTER);
+        mark.setOpaque(true);
+        mark.setBackground(new Color(51, 115, 97));
+        mark.setForeground(new Color(226, 249, 222));
+        mark.setFont(new Font("Dialog", Font.BOLD, 15));
+        mark.setPreferredSize(new Dimension(42, 42));
+        mark.setBorder(BorderFactory.createLineBorder(new Color(113, 178, 141), 1, true));
+        brand.add(mark, BorderLayout.WEST);
+
+        JPanel names = new JPanel(new GridLayout(2, 1, 0, 0));
+        names.setOpaque(false);
+        JLabel title = new JLabel("ANIMAL WAR");
+        title.setForeground(Color.WHITE);
+        title.setFont(new Font("Dialog", Font.BOLD, 20));
+        JLabel subtitle = new JLabel("NUSANTARA FRONTLINE  ·  STRATEGY BATTLE");
+        subtitle.setForeground(new Color(148, 181, 187));
+        subtitle.setFont(new Font("Dialog", Font.BOLD, 9));
+        names.add(title);
+        names.add(subtitle);
+        brand.add(names, BorderLayout.CENTER);
+        masthead.add(brand, BorderLayout.WEST);
+
+        JLabel hint = new JLabel("Pilih pasukan  →  tekan kartu untuk mengerahkan", SwingConstants.RIGHT);
+        hint.setForeground(new Color(160, 187, 187));
+        hint.setFont(new Font("Dialog", Font.PLAIN, 12));
+        masthead.add(hint, BorderLayout.EAST);
+        return masthead;
+    }
+
+    private JPanel makeCommandPanel() {
+        JPanel command = new JPanel(new BorderLayout(0, 8));
+        command.setBackground(PANEL);
+        command.setBorder(BorderFactory.createEmptyBorder(10, 18, 14, 18));
+
+        JPanel rosterHeader = new JPanel(new BorderLayout());
+        rosterHeader.setOpaque(false);
+        JLabel title = new JLabel("PASUKAN ERA SAAT INI");
+        title.setForeground(new Color(235, 241, 230));
+        title.setFont(new Font("Dialog", Font.BOLD, 11));
+        JLabel tip = new JLabel("Biaya, statistik, dan kemampuan khusus", SwingConstants.RIGHT);
+        tip.setForeground(new Color(139, 166, 175));
+        tip.setFont(new Font("Dialog", Font.PLAIN, 11));
+        rosterHeader.add(title, BorderLayout.WEST);
+        rosterHeader.add(tip, BorderLayout.EAST);
+        command.add(rosterHeader, BorderLayout.NORTH);
+
+        cardsGrid.setOpaque(false);
+        command.add(cardsGrid, BorderLayout.CENTER);
+
+        JPanel controls = new JPanel(new BorderLayout());
+        controls.setOpaque(false);
+        styleActionButton(upgradeButton, new Color(42, 110, 84), Color.WHITE);
+        upgradeButton.setHorizontalAlignment(SwingConstants.LEFT);
+        upgradeButton.setPreferredSize(new Dimension(280, 38));
+        upgradeButton.addActionListener(e -> {
+            if (game.upgradePlayerBase()) updateUnitCards();
+            refresh();
+        });
+        controls.add(upgradeButton, BorderLayout.WEST);
+
+        JPanel rightControls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        rightControls.setOpaque(false);
+        JLabel difficultyLabel = new JLabel("KESULITAN AI");
+        difficultyLabel.setForeground(new Color(155, 183, 188));
+        difficultyLabel.setFont(new Font("Dialog", Font.BOLD, 9));
+        difficultyBox.setSelectedItem("Normal");
+        difficultyBox.addActionListener(e -> applyDifficulty());
+        pauseButton.addActionListener(e -> togglePause());
+        restartButton.addActionListener(e -> restartGame());
+        styleActionButton(pauseButton, new Color(42, 65, 78), Color.WHITE);
+        styleActionButton(restartButton, new Color(42, 65, 78), Color.WHITE);
+        pauseButton.setPreferredSize(new Dimension(104, 36));
+        restartButton.setPreferredSize(new Dimension(126, 36));
+        rightControls.add(difficultyLabel);
+        rightControls.add(difficultyBox);
+        rightControls.add(pauseButton);
+        rightControls.add(restartButton);
+        controls.add(rightControls, BorderLayout.EAST);
+        command.add(controls, BorderLayout.SOUTH);
+        return command;
+    }
+
+    private static void styleActionButton(JButton button, Color background, Color foreground) {
+        button.setFont(new Font("Dialog", Font.BOLD, 11));
+        button.setBackground(background);
+        button.setForeground(foreground);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(87, 132, 128)),
+                BorderFactory.createEmptyBorder(5, 11, 5, 11)));
     }
 
     private void updateUnitCards() {
         cardsGrid.removeAll();
         unitCards.clear();
-        
-        int level = game.getPlayerBase().getLevel();
-        
-        // Ambil daftar hewan langsung dari UnitFactory (Single Source of Truth)
-        List<String> types = UnitFactory.getTypesForLevel(level);
-
+        List<String> types = UnitFactory.getTypesForLevel(game.getPlayerBase().getLevel());
         for (String type : types) {
             Animal sample = UnitFactory.create(type);
-            
-            String label = sample.getName();
-            int cost = sample.getCost();
-
-            UnitCard card = new UnitCard(type, label, cost);
+            UnitCard card = new UnitCard(type, sample);
             card.addActionListener(e -> {
                 game.spawnPlayerAnimal(type);
                 refresh();
@@ -145,31 +208,63 @@ public class GameFrame extends JFrame {
     }
 
     private void startGameLoop() {
-        Timer timer = new Timer(GameConfig.GAME_LOOP_MS, e -> {
+        lastFrameNanos = System.nanoTime();
+        gameTimer = new Timer(GameConfig.GAME_LOOP_MS, e -> {
             long now = System.nanoTime();
             long deltaMs = Math.max(0, (now - lastFrameNanos) / 1_000_000L);
             lastFrameNanos = now;
-            game.update(deltaMs);
+            if (!paused) game.update(deltaMs);
             refresh();
             gamePanel.repaint();
         });
-        timer.start();
+        gameTimer.start();
+    }
+
+    private void togglePause() {
+        if (game.getState() != GameState.PLAYING) return;
+        paused = !paused;
+        pauseButton.setText(paused ? "Lanjutkan" : "Jeda");
+        gamePanel.setPaused(paused);
+    }
+
+    private void restartGame() {
+        paused = false;
+        game = new GameController();
+        gamePanel.setGame(game);
+        applyDifficulty();
+        pauseButton.setText("Jeda");
+        updateUnitCards();
+        refresh();
+    }
+
+    private void applyDifficulty() {
+        Object selected = difficultyBox.getSelectedItem();
+        if (selected != null) {
+            game.getEnemyAI().setDifficulty(EnemyDifficulty.valueOf(selected.toString().toUpperCase()));
+        }
     }
 
     private void refresh() {
         hudPanel.refresh(game);
         spawnQueuePanel.refresh(game);
-        for (UnitCard card : unitCards) {
-            card.refresh(game);
-        }
-        Base pb = game.getPlayerBase();
-        int expNeeded = pb.getExpNeededForNextLevel();
+        for (UnitCard card : unitCards) card.refresh(game);
+        Base player = game.getPlayerBase();
+        int expNeeded = player.getExpNeededForNextLevel();
         if (expNeeded == 0) {
-            upgradeButton.setText("Base Maksimum (Level 3)");
+            upgradeButton.setText("BASE MAKSIMUM  ·  ERA 3");
             upgradeButton.setEnabled(false);
         } else {
-            upgradeButton.setText(String.format("UPGRADE KE ERA %d (Butuh %d EXP)", pb.getLevel() + 1, expNeeded));
-            upgradeButton.setEnabled(game.getState() == GameState.PLAYING && game.getPlayerResources().getExp() >= expNeeded);
+            upgradeButton.setText(String.format("UPGRADE KE ERA %d  ·  BUTUH %d EXP",
+                    player.getLevel() + 1, expNeeded));
+            upgradeButton.setEnabled(game.getState() == GameState.PLAYING
+                    && game.getPlayerResources().getExp() >= expNeeded);
+        }
+        pauseButton.setEnabled(game.getState() == GameState.PLAYING);
+        restartButton.setEnabled(true);
+        if (game.getState() != GameState.PLAYING && paused) {
+            paused = false;
+            pauseButton.setText("Jeda");
+            gamePanel.setPaused(false);
         }
     }
 }
