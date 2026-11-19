@@ -123,12 +123,7 @@ public class GameFrame extends JFrame {
         for (String type : types) {
             Animal sample = UnitFactory.create(type);
             
-            // Tentukan Role secara dinamis
-            String role = "Melee";
-            if (sample.getClass().getName().contains("Ranged")) role = "Ranged";
-            else if (sample.getClass().getName().contains("Heavy")) role = "Heavy";
-
-            String label = sample.getName() + " [" + role + "]";
+            String label = sample.getName();
             int cost = sample.getCost();
 
             UnitCard card = new UnitCard(type, label, cost);
