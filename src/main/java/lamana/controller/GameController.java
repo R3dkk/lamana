@@ -1,5 +1,11 @@
 package lamana.controller;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
+
 import lamana.ai.EnemyAIController;
 import lamana.core.GameConfig;
 import lamana.core.GameState;
@@ -16,8 +22,10 @@ public class GameController {
     private final MoneyExp enemyResources;
     private final BattleLane battleLane;
     private final EnemyAIController enemyAI;
+    private final Deque<Animal> playerSpawnQueue;
     private GameState state;
     private long passiveIncomeTimerMs;
+    private long playerSpawnCooldownRemainingMs;
 
     public GameController() {
         playerBase = new Base(0.0);
@@ -26,8 +34,10 @@ public class GameController {
         enemyResources = new MoneyExp(GameConfig.ENEMY_STARTING_MONEY, 0);
         battleLane = new BattleLane(playerBase, enemyBase, playerResources, enemyResources);
         enemyAI = new EnemyAIController(enemyBase, enemyResources, battleLane);
+        playerSpawnQueue = new ArrayDeque<>();
         state = GameState.PLAYING;
         passiveIncomeTimerMs = 0;
+        playerSpawnCooldownRemainingMs = 0;
     }
 
     public void update(long deltaMs) {
@@ -40,6 +50,8 @@ public class GameController {
             passiveIncomeTimerMs -= GameConfig.PASSIVE_INCOME_INTERVAL_MS;
             playerResources.addMoney(getPassiveIncomePerSecond());
         }
+
+        updatePlayerSpawnQueue(deltaMs);
 
         // Enemy AI update (AI spawns + passive income)
         enemyAI.update(deltaMs);
@@ -72,20 +84,59 @@ public class GameController {
 
     public boolean spawnPlayerAnimal(String type) {
         if (state != GameState.PLAYING || playerBase.isDestroyed()) return false;
+        if (playerSpawnQueue.size() >= GameConfig.PLAYER_SPAWN_QUEUE_CAPACITY) return false;
         Animal animal;
         try { animal = UnitFactory.create(type); }
         catch (IllegalArgumentException e) { return false; }
         if (!playerBase.spawnAnimal(animal, playerResources)) return false;
-        battleLane.addPlayerAnimal(animal);
+        boolean queueWasEmpty = playerSpawnQueue.isEmpty();
+        playerSpawnQueue.addLast(animal);
+        if (queueWasEmpty) {
+            playerSpawnCooldownRemainingMs = GameConfig.PLAYER_SPAWN_COOLDOWN_MS;
+        }
         return true;
     }
 
     public boolean canSpawnPlayerAnimal(String type) {
         if (state != GameState.PLAYING) return false;
+        if (playerSpawnQueue.size() >= GameConfig.PLAYER_SPAWN_QUEUE_CAPACITY) return false;
         try {
             Animal test = UnitFactory.create(type);
             return playerBase.canSpawn(test, playerResources);
         } catch (IllegalArgumentException e) { return false; }
+    }
+
+    private void updatePlayerSpawnQueue(long deltaMs) {
+        long elapsedMs = deltaMs;
+        while (!playerSpawnQueue.isEmpty() && elapsedMs >= playerSpawnCooldownRemainingMs) {
+            elapsedMs -= playerSpawnCooldownRemainingMs;
+            battleLane.addPlayerAnimal(playerSpawnQueue.removeFirst());
+            if (playerSpawnQueue.isEmpty()) {
+                playerSpawnCooldownRemainingMs = 0;
+                return;
+            }
+            playerSpawnCooldownRemainingMs = GameConfig.PLAYER_SPAWN_COOLDOWN_MS;
+        }
+        if (!playerSpawnQueue.isEmpty()) {
+            playerSpawnCooldownRemainingMs -= elapsedMs;
+        }
+    }
+
+    public List<Animal> getPlayerSpawnQueue() {
+        return Collections.unmodifiableList(new ArrayList<>(playerSpawnQueue));
+    }
+
+    public int getPlayerSpawnQueueCapacity() {
+        return GameConfig.PLAYER_SPAWN_QUEUE_CAPACITY;
+    }
+
+    public long getPlayerSpawnCooldownRemainingMs() {
+        return playerSpawnCooldownRemainingMs;
+    }
+
+    public double getPlayerSpawnCooldownProgress() {
+        if (playerSpawnQueue.isEmpty()) return 0.0;
+        return 1.0 - (double) playerSpawnCooldownRemainingMs / GameConfig.PLAYER_SPAWN_COOLDOWN_MS;
     }
 
     public boolean upgradePlayerBase() {

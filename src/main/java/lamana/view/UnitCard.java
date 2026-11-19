@@ -7,8 +7,8 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Tombol kartu spawn untuk satu jenis hewan di HUD bawah.
- * Mengontrol enable/disable secara otomatis berdasarkan ketersediaan Gold, Level Base, dan GameState.
+ * Tombol untuk memasukkan satu jenis hewan ke antrean spawn.
+ * Mengontrol enable/disable berdasarkan Gold, Level Base, kapasitas antrean, dan GameState.
  */
 public class UnitCard extends JButton {
 

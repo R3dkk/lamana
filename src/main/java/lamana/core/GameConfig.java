@@ -27,6 +27,9 @@ public final class GameConfig {
 
     public static final long PASSIVE_INCOME_INTERVAL_MS = 1000L;
 
+    public static final int PLAYER_SPAWN_QUEUE_CAPACITY = 5;
+    public static final long PLAYER_SPAWN_COOLDOWN_MS = 1500L;
+
     public static final int ENEMY_PASSIVE_INCOME = 4;
 
     public static final int EXP_FOR_LEVEL_2 = 100;

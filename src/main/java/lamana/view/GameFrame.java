@@ -28,6 +28,7 @@ import lamana.model.building.Base;
 public class GameFrame extends JFrame {
     private final GameController game;
     private final HUDPanel hudPanel;
+    private final SpawnQueuePanel spawnQueuePanel;
     private final GamePanel gamePanel;
     private final List<UnitCard> unitCards = new ArrayList<>();
     private final JButton upgradeButton;
@@ -38,6 +39,7 @@ public class GameFrame extends JFrame {
         super("Animal War — 2D Strategy Battle Game (OOP Final Project)");
         this.game = new GameController();
         this.hudPanel = new HUDPanel();
+        this.spawnQueuePanel = new SpawnQueuePanel();
         this.gamePanel = new GamePanel(game);
         this.upgradeButton = new JButton("Upgrade Base");
         this.cardsGrid = new JPanel(new GridLayout(1, 3, 6, 6));
@@ -51,7 +53,10 @@ public class GameFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(0, 0));
 
-        add(hudPanel, BorderLayout.NORTH);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.add(hudPanel, BorderLayout.NORTH);
+        topPanel.add(spawnQueuePanel, BorderLayout.SOUTH);
+        add(topPanel, BorderLayout.NORTH);
         add(gamePanel, BorderLayout.CENTER);
 
         JPanel southPanel = new JPanel(new BorderLayout(6, 6));
@@ -153,6 +158,7 @@ public class GameFrame extends JFrame {
 
     private void refresh() {
         hudPanel.refresh(game);
+        spawnQueuePanel.refresh(game);
         for (UnitCard card : unitCards) {
             card.refresh(game);
         }
