@@ -63,11 +63,21 @@ public class EnemyAIController {
         }
 
         // Eval interval depends on difficulty
-        long evalInterval = switch (difficulty) {
-            case EASY   -> 3000L;
-            case NORMAL -> 2000L;
-            case HARD   -> 1500L;
-        };
+        long evalInterval;
+        switch (difficulty) {
+            case EASY:
+                evalInterval = 3000L;
+                break;
+            case NORMAL:
+                evalInterval = 2000L;
+                break;
+            case HARD:
+                evalInterval = 1500L;
+                break;
+            default:
+                evalInterval = 2000L;
+                break;
+        }
 
         evalTimerMs += deltaMs;
         while (evalTimerMs >= evalInterval) {

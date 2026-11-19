@@ -60,11 +60,14 @@ public class GameController {
     }
 
     public int getPassiveIncomePerSecond() {
-        return switch (playerBase.getLevel()) {
-            case 1 -> GameConfig.PASSIVE_INCOME_LV1;
-            case 2 -> GameConfig.PASSIVE_INCOME_LV2;
-            default -> GameConfig.PASSIVE_INCOME_LV3;
-        };
+        switch (playerBase.getLevel()) {
+            case 1:
+                return GameConfig.PASSIVE_INCOME_LV1;
+            case 2:
+                return GameConfig.PASSIVE_INCOME_LV2;
+            default:
+                return GameConfig.PASSIVE_INCOME_LV3;
+        }
     }
 
     public boolean spawnPlayerAnimal(String type) {

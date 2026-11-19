@@ -151,12 +151,21 @@ public class GamePanel extends JPanel {
         g.setColor(new Color(0, 0, 0, 160));
         g.fillRect(0, 0, getWidth(), getHeight());
 
-        String msg = switch (game.getState()) {
-            case VICTORY -> "KEMENANGAN!";
-            case DEFEAT  -> "KEKALAHAN!";
-            case DRAW    -> "SERI!";
-            default      -> "";
-        };
+        String msg;
+        switch (game.getState()) {
+            case VICTORY:
+                msg = "KEMENANGAN!";
+                break;
+            case DEFEAT:
+                msg = "KEKALAHAN!";
+                break;
+            case DRAW:
+                msg = "SERI!";
+                break;
+            default:
+                msg = "";
+                break;
+        }
 
         g.setFont(new Font("Arial", Font.BOLD, 48));
         FontMetrics fm = g.getFontMetrics();
