@@ -13,7 +13,7 @@ import lamana.model.animal.heavy.HeavyAnimal;
 public class Naga extends RangedAnimal implements SpecialAbility {
 
     public Naga() {
-        super("Naga", 350, 70, 8, 2, 250, 70, 40, 3);
+        super("Naga", 340, 65, 8, 2, 250, 70, 40, 3);
     }
 
     @Override

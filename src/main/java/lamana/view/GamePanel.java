@@ -4,6 +4,7 @@ import lamana.controller.GameController;
 import lamana.core.GameConfig;
 import lamana.core.GameState;
 import lamana.model.animal.Animal;
+import lamana.model.building.Base;
 
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
@@ -39,7 +40,7 @@ public class GamePanel extends JPanel {
         this.game = game;
         setOpaque(true);
         setBackground(new Color(67, 113, 116));
-        setPreferredSize(new java.awt.Dimension(1100, 480));
+        setPreferredSize(new java.awt.Dimension(1200, 540));
     }
 
     public void setGame(GameController game) {
@@ -69,7 +70,6 @@ public class GamePanel extends JPanel {
         int width = getWidth();
         int height = getHeight();
         drawBackdrop(g, width, height);
-        drawArenaLabel(g);
         drawBattleLane(g, width, height);
         drawBases(g, width, height);
         drawUnits(g, width, height);
@@ -147,32 +147,9 @@ public class GamePanel extends JPanel {
         }
     }
 
-    private void drawArenaLabel(Graphics2D g) {
-        g.setColor(new Color(12, 35, 40, 155));
-        g.fillRoundRect(20, 17, 200, 45, 13, 13);
-        g.setColor(new Color(206, 235, 216));
-        g.setFont(new Font("Dialog", Font.BOLD, 10));
-        g.drawString("NUSANTARA  /  FRONTLINE", 33, 35);
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Dialog", Font.BOLD, 16));
-        g.drawString("BATTLE LANE", 33, 53);
-
-        g.setFont(new Font("Dialog", Font.BOLD, 10));
-        g.setColor(new Color(221, 241, 237));
-        String status = game.getState() != GameState.PLAYING ? "PERTANDINGAN SELESAI"
-                : (paused ? "PERTEMPURAN DIJEDA" : "PERTEMPURAN BERLANGSUNG");
-        FontMetrics metrics = g.getFontMetrics();
-        int x = getWidth() - metrics.stringWidth(status) - 27;
-        g.drawString(status, x, 32);
-        g.setColor(new Color(9, 39, 39, 80));
-        g.fillOval(x - 14, 24, 7, 7);
-        g.setColor(paused ? new Color(246, 199, 104) : new Color(139, 227, 154));
-        g.fillOval(x - 14, 24, 7, 7);
-    }
-
     private void drawBattleLane(Graphics2D g, int width, int height) {
         int top = (int) (height * .65);
-        int laneLeft = Math.max(65, (int) (width * .075));
+        int laneLeft = Math.max(66, (int) (width * .075));
         int laneRight = width - laneLeft;
         int laneWidth = laneRight - laneLeft;
 
@@ -192,21 +169,22 @@ public class GamePanel extends JPanel {
         g.drawLine(laneLeft + 20, top + 52, laneRight - 20, top + 52);
         g.setStroke(new BasicStroke(1f));
 
-        for (int i = 0; i <= 4; i++) {
-            int tickX = laneLeft + i * laneWidth / 4;
+        int divisions = 6;
+        for (int i = 0; i <= divisions; i++) {
+            int tickX = laneLeft + i * laneWidth / divisions;
             g.setColor(new Color(242, 223, 167, 130));
             g.drawLine(tickX, top + 87, tickX, top + 95);
-            String marker = Integer.toString(i * (int) (GameConfig.LANE_LENGTH / 4));
+            String marker = Integer.toString((int) Math.round(i * GameConfig.LANE_LENGTH / divisions));
             g.setFont(new Font("Dialog", Font.BOLD, 9));
             g.setColor(new Color(227, 226, 192));
-            g.drawString(marker, tickX - 3, top + 108);
+            g.drawString(marker, tickX - 4, top + 108);
         }
 
         // Grass lip and small stones to make the path feel part of the scene.
         g.setColor(new Color(65, 119, 69));
         g.fillRoundRect(laneLeft + 7, top + 18, laneWidth - 14, 9, 8, 8);
         g.setColor(new Color(213, 185, 128, 150));
-        for (int i = 0; i < 18; i++) {
+        for (int i = 0; i < 24; i++) {
             int pebbleX = laneLeft + 20 + (i * 73) % Math.max(1, laneWidth - 40);
             int pebbleY = top + 40 + (i % 4) * 11;
             g.fillOval(pebbleX, pebbleY, 4 + i % 3, 3);
@@ -217,25 +195,49 @@ public class GamePanel extends JPanel {
         int top = (int) (height * .65);
         int groundY = top + 93;
         int baseSize = Math.max(70, Math.min(103, width / 13));
-        int leftX = Math.max(48, (int) (width * .055));
+        int leftX = Math.max(66, (int) (width * .055));
         int rightX = width - leftX;
 
-        GameArt.drawBase(g, leftX, groundY, true, baseSize);
-        GameArt.drawBase(g, rightX, groundY, false, baseSize);
-        drawBaseName(g, "PLAYER", leftX, groundY - (int) (baseSize * 1.28) - 44,
-                new Color(190, 236, 244));
-        drawBaseName(g, "MUSUH", rightX, groundY - (int) (baseSize * 1.28) - 44,
-                new Color(255, 206, 196));
+        Base player = game.getPlayerBase();
+        Base enemy = game.getEnemyBase();
+        GameArt.drawBase(g, leftX, groundY, true, baseSize, player.getLevel());
+        GameArt.drawBase(g, rightX, groundY, false, baseSize, enemy.getLevel());
+
+        int hudTopY = groundY - (int) (baseSize * 1.28) - 26;
+        drawBaseStatus(g, "PLAYER · ERA " + player.getLevel(), player, leftX, hudTopY,
+                new Color(67, 189, 225), new Color(190, 236, 244));
+        drawBaseStatus(g, "MUSUH · ERA " + enemy.getLevel(), enemy, rightX, hudTopY,
+                new Color(245, 109, 97), new Color(255, 206, 196));
     }
 
-    private static void drawBaseName(Graphics2D g, String name, int centerX, int y, Color color) {
-        g.setFont(new Font("Dialog", Font.BOLD, 10));
-        FontMetrics metrics = g.getFontMetrics();
-        int width = metrics.stringWidth(name) + 17;
-        g.setColor(new Color(8, 28, 33, 172));
-        g.fillRoundRect(centerX - width / 2, y - 12, width, 21, 8, 8);
-        g.setColor(color);
-        g.drawString(name, centerX - metrics.stringWidth(name) / 2, y + 2);
+    private static void drawBaseStatus(Graphics2D g, String title, Base base, int centerX, int y,
+                                       Color barColor, Color textColor) {
+        int boxW = 114;
+        int boxH = 38;
+        int boxX = centerX - boxW / 2;
+        int boxY = y - boxH;
+        g.setColor(new Color(8, 24, 32, 200));
+        g.fillRoundRect(boxX, boxY, boxW, boxH, 8, 8);
+        g.setColor(new Color(62, 92, 104, 180));
+        g.drawRoundRect(boxX, boxY, boxW, boxH, 8, 8);
+
+        g.setFont(new Font("Dialog", Font.BOLD, 9));
+        FontMetrics fm = g.getFontMetrics();
+        g.setColor(textColor);
+        g.drawString(title, centerX - fm.stringWidth(title) / 2, boxY + 12);
+
+        String hpText = base.getHp() + " / " + base.getMaxHp() + " HP";
+        g.setColor(Color.WHITE);
+        g.drawString(hpText, centerX - fm.stringWidth(hpText) / 2, boxY + 23);
+
+        int barW = boxW - 14;
+        int barX = boxX + 7;
+        int barY = boxY + 28;
+        g.setColor(new Color(34, 51, 61));
+        g.fillRoundRect(barX, barY, barW, 6, 4, 4);
+        int fillW = (int) Math.round((double) base.getHp() / Math.max(1, base.getMaxHp()) * barW);
+        g.setColor(barColor);
+        g.fillRoundRect(barX, barY, fillW, 6, 4, 4);
     }
 
     private void drawUnits(Graphics2D g, int width, int height) {
@@ -281,9 +283,16 @@ public class GamePanel extends JPanel {
         } else {
             visual.position = animal.getPosition();
             visual.playerSide = playerSide;
-            String nextAction = animationTimeMs - visual.actionStartedMs < ACTION_ANIMATION_MS
-                    && visual.action.equals("spawn") ? "spawn"
-                    : (animal.isAttackingAnimation() ? "serang" : "jalan");
+            String nextAction;
+            if (visual.action.equals("spawn") && animationTimeMs - visual.actionStartedMs < ACTION_ANIMATION_MS) {
+                nextAction = "spawn";
+            } else if (animal.isAttackingAnimation()) {
+                nextAction = "serang";
+            } else if (animal.hasMovedThisTick()) {
+                nextAction = "jalan";
+            } else {
+                nextAction = "idle";
+            }
             if (!nextAction.equals(visual.action)) {
                 visual.action = nextAction;
                 visual.actionStartedMs = animationTimeMs;
@@ -295,9 +304,14 @@ public class GamePanel extends JPanel {
                             int laneLeft, int laneWidth, int groundY, int size) {
         if (visual == null) return;
         int x = laneLeft + (int) (laneWidth * visual.position / GameConfig.LANE_LENGTH);
-        int frame = visual.action.equals("jalan")
-                ? (int) ((animationTimeMs / ANIMATION_FRAME_MS) % 4L)
-                : (int) Math.min(3, Math.max(0, (animationTimeMs - visual.actionStartedMs) / ANIMATION_FRAME_MS));
+        int frame;
+        if (visual.action.equals("idle")) {
+            frame = 0;
+        } else if (visual.action.equals("jalan")) {
+            frame = (int) ((animationTimeMs / ANIMATION_FRAME_MS) % 4L);
+        } else {
+            frame = (int) Math.min(3, Math.max(0, (animationTimeMs - visual.actionStartedMs) / ANIMATION_FRAME_MS));
+        }
         drawUnit(g, animal, x, groundY, size, visual.playerSide, visual.action, frame);
     }
 

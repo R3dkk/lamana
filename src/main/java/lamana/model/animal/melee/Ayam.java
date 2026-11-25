@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Ayam extends MeleeAnimal implements SpecialAbility {
 
     public Ayam() {
-        super("Ayam", 80, 10, 2, 30, 15, 10, 1);
+        super("Ayam", 100, 18, 2, 30, 15, 10, 1);
     }
 
     @Override

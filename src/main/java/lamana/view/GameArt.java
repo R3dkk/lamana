@@ -37,25 +37,37 @@ final class GameArt {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         String key = assetKey(animal.getName());
         String folder = key.equals("kurakura") ? "kura-kura" : key;
-        BufferedImage image = spriteFrame("/assets/units/" + folder + "/" + action + ".png",
-                animationFrame, 4);
+        boolean idle = "idle".equals(action);
+        String spriteAction = idle ? "jalan" : action;
+        BufferedImage image = spriteFrame("/assets/units/" + folder + "/" + spriteAction + ".png",
+                idle ? 0 : animationFrame, 4);
         if (image == null) image = image("/assets/units/" + key + ".png");
-        double aspect = image == null ? 1.35 : (double) image.getWidth() / image.getHeight();
-        int spriteWidth = Math.max(height / 2, Math.min((int) (height * 1.75), (int) (height * aspect)));
+
+        int drawW;
+        int drawH;
+        if (image != null) {
+            int maxW = (int) (height * 1.65);
+            double scale = Math.min((double) maxW / image.getWidth(), (double) height / image.getHeight());
+            drawW = Math.max(16, (int) Math.round(image.getWidth() * scale));
+            drawH = Math.max(16, (int) Math.round(image.getHeight() * scale));
+        } else {
+            drawW = (int) (height * 1.2);
+            drawH = height;
+        }
         Color faction = playerSide ? new Color(92, 203, 233) : new Color(248, 127, 105);
 
         g.setColor(new Color(11, 25, 27, 95));
-        g.fillOval(centerX - spriteWidth / 3, groundY - 5, spriteWidth * 2 / 3, 9);
+        g.fillOval(centerX - drawW / 3, groundY - 5, drawW * 2 / 3, 9);
         if (image != null) {
-            int x = centerX - spriteWidth / 2;
-            if (playerSide) g.drawImage(image, x, groundY - height, spriteWidth, height, null);
-            else g.drawImage(image, x + spriteWidth, groundY - height, -spriteWidth, height, null);
+            int x = centerX - drawW / 2;
+            if (playerSide) g.drawImage(image, x, groundY - drawH, drawW, drawH, null);
+            else g.drawImage(image, x + drawW, groundY - drawH, -drawW, drawH, null);
         } else {
             drawFallbackCreature(g, centerX, groundY, height, playerSide, faction);
         }
         g.setColor(faction);
         g.setStroke(new BasicStroke(2f));
-        g.drawLine(centerX - spriteWidth / 4, groundY + 3, centerX + spriteWidth / 4, groundY + 3);
+        g.drawLine(centerX - drawW / 4, groundY + 3, centerX + drawW / 4, groundY + 3);
         g.dispose();
     }
 
@@ -68,25 +80,48 @@ final class GameArt {
             for (int i = 0; i < frameCount; i++) {
                 int left = i * sheet.getWidth() / frameCount;
                 int right = (i + 1) * sheet.getWidth() / frameCount;
-                frames[i] = sheet.getSubimage(left, 0, right - left, sheet.getHeight());
+                frames[i] = trimTransparent(sheet.getSubimage(left, 0, right - left, sheet.getHeight()));
             }
             FRAME_CACHE.put(path, frames);
         }
         return frames[Math.floorMod(frame, frames.length)];
     }
 
+    private static BufferedImage trimTransparent(BufferedImage src) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int minX = w, minY = h, maxX = -1, maxY = -1;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                if (((src.getRGB(x, y) >>> 24) & 0xFF) > 10) {
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+        if (maxX < minX || maxY < minY) return src;
+        return src.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
+    }
+
     static void drawCardSprite(Graphics2D source, Animal animal, int x, int y, int width, int height) {
         Graphics2D g = (Graphics2D) source.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        BufferedImage image = image("/assets/units/" + assetKey(animal.getName()) + ".png");
-        double aspect = image == null ? 1.35 : (double) image.getWidth() / image.getHeight();
-        int spriteHeight = height;
-        int spriteWidth = Math.min(width, (int) (spriteHeight * aspect));
-        int drawX = x + (width - spriteWidth) / 2;
+        String key = assetKey(animal.getName());
+        String folder = key.equals("kurakura") ? "kura-kura" : key;
+        BufferedImage image = spriteFrame("/assets/units/" + folder + "/jalan.png", 0, 4);
+        if (image == null) image = image("/assets/units/" + key + ".png");
+
         g.setColor(new Color(10, 22, 28, 75));
         g.fillOval(x + width / 4, y + height - 5, width / 2, 7);
         if (image != null) {
-            g.drawImage(image, drawX, y, spriteWidth, spriteHeight, null);
+            double scale = Math.min((double) width / image.getWidth(), (double) height / image.getHeight());
+            int drawW = Math.max(12, (int) Math.round(image.getWidth() * scale));
+            int drawH = Math.max(12, (int) Math.round(image.getHeight() * scale));
+            int drawX = x + (width - drawW) / 2;
+            int drawY = y + (height - drawH) / 2;
+            g.drawImage(image, drawX, drawY, drawW, drawH, null);
         } else {
             drawFallbackCreature(g, x + width / 2, y + height, height, true,
                     new Color(117, 190, 155));
@@ -117,7 +152,7 @@ final class GameArt {
                 Math.max(3, height / 18), Math.max(3, height / 18));
     }
 
-    static void drawBase(Graphics2D source, int centerX, int groundY, boolean playerSide, int size) {
+    static void drawBase(Graphics2D source, int centerX, int groundY, boolean playerSide, int size, int level) {
         Graphics2D g = (Graphics2D) source.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         int width = size;
@@ -157,24 +192,57 @@ final class GameArt {
             g.setColor(new Color(25, 38, 48));
             g.fillRoundRect(x + width / 2 - 5, groundY - 25, 10, 21, 5, 5);
 
-            // Small flag gives the two teams a clear visual identity.
-            int flagX = centerX + (playerSide ? -5 : 5);
-            g.setColor(new Color(225, 232, 221));
-            g.setStroke(new BasicStroke(2f));
-            g.drawLine(flagX, y + 8, flagX, y - 17);
-            g.setColor(playerSide ? new Color(66, 195, 230) : new Color(252, 113, 92));
-            int[] flagXs = playerSide
-                    ? new int[]{flagX, flagX - 17, flagX}
-                    : new int[]{flagX, flagX + 17, flagX};
-            int[] flagYs = new int[]{y - 16, y - 10, y - 3};
-            g.fillPolygon(flagXs, flagYs, 3);
-
             // Stone seams.
             g.setColor(new Color(235, 241, 226, 75));
             g.drawLine(x + 15, y + 51, x + width - 15, y + 51);
             g.drawLine(x + 15, y + 68, x + width - 15, y + 68);
         }
+
+        // Mounted Turret / Meriam pertahanan di atas benteng (sesuai komposisi Base -> Turret)
+        drawMountedTurret(g, centerX, y, width, playerSide, level);
         g.dispose();
+    }
+
+    private static void drawMountedTurret(Graphics2D g, int centerX, int baseTopY, int size,
+                                          boolean playerSide, int level) {
+        int dir = playerSide ? 1 : -1;
+        int mountY = baseTopY + Math.max(8, size / 6);
+        int domeW = Math.max(24, size / 3);
+        int domeH = Math.max(16, size / 4);
+        Color accent = playerSide ? new Color(75, 200, 232) : new Color(245, 108, 92);
+        Color metalDark = new Color(36, 46, 56);
+        Color metalLight = level >= 3 ? new Color(236, 186, 74)
+                : (level == 2 ? new Color(165, 186, 198) : new Color(110, 128, 140));
+
+        // Base platform turret
+        g.setColor(metalDark);
+        g.fillRoundRect(centerX - domeW / 2 - 4, mountY - 2, domeW + 8, 8, 4, 4);
+
+        // Barrel meriam mengarah ke medan pertempuran
+        int barrelLen = Math.max(22, size / 3) + (level - 1) * 5;
+        int barrelH = level >= 2 ? 7 : 5;
+        int bx = playerSide ? centerX + 2 : centerX - 2 - barrelLen;
+        int by = mountY - domeH / 2 - barrelH / 2;
+
+        g.setColor(metalDark);
+        g.fillRoundRect(bx - (playerSide ? 0 : 2), by - 1, barrelLen + 2, barrelH + 2, 3, 3);
+        g.setColor(metalLight);
+        g.fillRoundRect(bx, by, barrelLen, barrelH, 2, 2);
+        if (level >= 3) {
+            // Double barrel di Era 3
+            g.fillRoundRect(bx, by - barrelH - 2, barrelLen - 4, barrelH - 1, 2, 2);
+        }
+
+        // Moncong meriam
+        int muzzleX = playerSide ? bx + barrelLen - 3 : bx - 2;
+        g.setColor(accent);
+        g.fillRect(muzzleX, by - 1, 5, barrelH + 2);
+
+        // Kubah turret
+        g.setColor(metalDark);
+        g.fillArc(centerX - domeW / 2, mountY - domeH, domeW, domeH * 2, 0, 180);
+        g.setColor(accent);
+        g.fillOval(centerX - 4 + dir * 2, mountY - domeH / 2 - 3, 7, 7);
     }
 
     private static BufferedImage image(String resourcePath) {

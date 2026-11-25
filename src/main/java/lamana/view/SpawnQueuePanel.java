@@ -46,7 +46,8 @@ public class SpawnQueuePanel extends JPanel {
             slot.setOpaque(true);
             slot.setBackground(EMPTY_SLOT);
             slot.setForeground(Color.LIGHT_GRAY);
-            slot.setFont(new Font("Arial", Font.BOLD, 11));
+            slot.setFont(new Font("Arial", Font.BOLD, 12));
+            slot.setIconTextGap(6);
             slot.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 120)));
             slot.setToolTipText("Slot antrean " + (i + 1) + " — kosong");
             slots.add(slot);
@@ -76,12 +77,13 @@ public class SpawnQueuePanel extends JPanel {
             JLabel slot = slots.get(i);
             if (i < queue.size()) {
                 Animal animal = queue.get(i);
-                String name = animal.getName();
-                slot.setText(name.length() > 3 ? name.substring(0, 3).toUpperCase() : name.toUpperCase());
+                slot.setIcon(new QueueIcon(animal));
+                slot.setText(animal.getName());
                 slot.setBackground(FILLED_SLOT);
                 slot.setForeground(Color.WHITE);
-                slot.setToolTipText((i == 0 ? "Berikutnya: " : "Antrean: ") + name);
+                slot.setToolTipText((i == 0 ? "Berikutnya: " : "Antrean: ") + animal.getName());
             } else {
+                slot.setIcon(null);
                 slot.setText("—");
                 slot.setBackground(EMPTY_SLOT);
                 slot.setForeground(Color.LIGHT_GRAY);
@@ -93,6 +95,21 @@ public class SpawnQueuePanel extends JPanel {
             cooldownBar.setValue(0);
         } else {
             cooldownBar.setValue((int) Math.round(game.getPlayerSpawnCooldownProgress() * 1000));
+        }
+    }
+
+    private static final class QueueIcon implements javax.swing.Icon {
+        private final Animal animal;
+
+        QueueIcon(Animal animal) { this.animal = animal; }
+        @Override public int getIconWidth() { return 26; }
+        @Override public int getIconHeight() { return 26; }
+
+        @Override
+        public void paintIcon(java.awt.Component c, java.awt.Graphics graphics, int x, int y) {
+            java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+            GameArt.drawCardSprite(g, animal, x, y, 26, 26);
+            g.dispose();
         }
     }
 }

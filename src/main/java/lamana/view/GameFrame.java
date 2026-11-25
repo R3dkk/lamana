@@ -71,7 +71,7 @@ public class GameFrame extends JFrame {
 
         JPanel top = new JPanel(new BorderLayout(0, 2));
         top.setBackground(BACKGROUND);
-        top.add(makeMasthead(), BorderLayout.NORTH);
+        top.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
         top.add(hudPanel, BorderLayout.CENTER);
         top.add(spawnQueuePanel, BorderLayout.SOUTH);
         root.add(top, BorderLayout.NORTH);
@@ -87,42 +87,6 @@ public class GameFrame extends JFrame {
                 if (gameTimer != null) gameTimer.stop();
             }
         });
-    }
-
-    private JPanel makeMasthead() {
-        JPanel masthead = new JPanel(new BorderLayout());
-        masthead.setBackground(BACKGROUND);
-        masthead.setBorder(BorderFactory.createEmptyBorder(14, 20, 11, 20));
-
-        JPanel brand = new JPanel(new BorderLayout(11, 0));
-        brand.setOpaque(false);
-        JLabel mark = new JLabel("AW", SwingConstants.CENTER);
-        mark.setOpaque(true);
-        mark.setBackground(new Color(51, 115, 97));
-        mark.setForeground(new Color(226, 249, 222));
-        mark.setFont(new Font("Dialog", Font.BOLD, 15));
-        mark.setPreferredSize(new Dimension(42, 42));
-        mark.setBorder(BorderFactory.createLineBorder(new Color(113, 178, 141), 1, true));
-        brand.add(mark, BorderLayout.WEST);
-
-        JPanel names = new JPanel(new GridLayout(2, 1, 0, 0));
-        names.setOpaque(false);
-        JLabel title = new JLabel("ANIMAL WAR");
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("Dialog", Font.BOLD, 20));
-        JLabel subtitle = new JLabel("NUSANTARA FRONTLINE  ·  STRATEGY BATTLE");
-        subtitle.setForeground(new Color(148, 181, 187));
-        subtitle.setFont(new Font("Dialog", Font.BOLD, 9));
-        names.add(title);
-        names.add(subtitle);
-        brand.add(names, BorderLayout.CENTER);
-        masthead.add(brand, BorderLayout.WEST);
-
-        JLabel hint = new JLabel("Pilih pasukan  →  tekan kartu untuk mengerahkan", SwingConstants.RIGHT);
-        hint.setForeground(new Color(160, 187, 187));
-        hint.setFont(new Font("Dialog", Font.PLAIN, 12));
-        masthead.add(hint, BorderLayout.EAST);
-        return masthead;
     }
 
     private JPanel makeCommandPanel() {

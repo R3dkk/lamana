@@ -90,35 +90,37 @@ public class BattleLane {
     private void moveAllUnits(double deltaSeconds) {
         if (deltaSeconds <= 0) return;
 
-        // Catat posisi lama untuk mendeteksi pergerakan
-        for (Animal a : playerUnits) a.setMovedThisTick(false);
-        for (Animal a : enemyUnits) a.setMovedThisTick(false);
+        // Catat posisi lama sebelum dipindahkan untuk mendeteksi pergerakan nyata
+        Map<Animal, Double> oldPositions = new IdentityHashMap<>();
+        for (Animal a : playerUnits) {
+            a.setMovedThisTick(false);
+            oldPositions.put(a, a.getPosition());
+        }
+        for (Animal a : enemyUnits) {
+            a.setMovedThisTick(false);
+            oldPositions.put(a, a.getPosition());
+        }
 
         Map<Animal, Double> proposedPlayerPositions = proposePositions(playerUnits, enemyUnits, true, deltaSeconds);
         Map<Animal, Double> proposedEnemyPositions  = proposePositions(enemyUnits, playerUnits, false, deltaSeconds);
 
         preventFrontUnitsFromCrossing(proposedPlayerPositions, proposedEnemyPositions);
-        
+
         // Terapkan posisi baru
         applyPositionsWithSpacing(playerUnits, proposedPlayerPositions, true);
         applyPositionsWithSpacing(enemyUnits, proposedEnemyPositions, false);
 
-        // Set movedThisTick jika posisi benar-benar berubah
+        // Set movedThisTick hanya jika posisi benar-benar berubah setelah spacing
         for (Animal a : playerUnits) {
-            if (proposedPlayerPositions.containsKey(a)) {
-                double oldPos = a.getPosition();
-                // applyPositionsWithSpacing sudah mengubah posisi, kita cek apakah beda jauh
-                if (Math.abs(oldPos - a.getPosition()) > 0.001) { // toleransi
-                    a.setMovedThisTick(true);
-                }
+            Double oldPos = oldPositions.get(a);
+            if (oldPos != null && Math.abs(oldPos - a.getPosition()) > 0.0001) {
+                a.setMovedThisTick(true);
             }
         }
         for (Animal a : enemyUnits) {
-             if (proposedEnemyPositions.containsKey(a)) {
-                double oldPos = a.getPosition();
-                if (Math.abs(oldPos - a.getPosition()) > 0.001) {
-                    a.setMovedThisTick(true);
-                }
+            Double oldPos = oldPositions.get(a);
+            if (oldPos != null && Math.abs(oldPos - a.getPosition()) > 0.0001) {
+                a.setMovedThisTick(true);
             }
         }
     }

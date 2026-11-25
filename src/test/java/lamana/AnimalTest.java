@@ -32,7 +32,7 @@ public class AnimalTest {
     public void testAyamPolymorphicDoubleHit() {
         Ayam ayam = new Ayam();
         assertEquals("Ayam", ayam.getName());
-        assertEquals(10, ayam.getDamage());
+        assertEquals(18, ayam.getDamage());
 
         int doubleHitCount = 0;
         AttackContext ctx = new AttackContext(new ArrayList<>(), true);
@@ -43,7 +43,7 @@ public class AnimalTest {
             ayam.attack(target, 1.0, ctx);
             int damageDiterima = hpAwal - target.getHp();
 
-            if (damageDiterima == 16) {
+            if (damageDiterima == 28) {
                 doubleHitCount++;
             }
         }
@@ -54,7 +54,7 @@ public class AnimalTest {
     @Test
     public void testHarimauPolymorphicCriticalHit() {
         Harimau harimau = new Harimau();
-        assertEquals(30, harimau.getDamage());
+        assertEquals(38, harimau.getDamage());
 
         int critCount = 0;
         AttackContext ctx = new AttackContext(new ArrayList<>(), true);
@@ -65,7 +65,7 @@ public class AnimalTest {
             harimau.attack(target, 1.0, ctx);
             int damageDiterima = hpAwal - target.getHp();
 
-            if (damageDiterima == 48) {
+            if (damageDiterima == 60) {
                 critCount++;
             }
         }
@@ -76,40 +76,39 @@ public class AnimalTest {
     @Test
     public void testKuraKuraDamageReduction() {
         KuraKura kura = new KuraKura();
-        assertEquals(200, kura.getHp());
+        assertEquals(220, kura.getHp());
 
         // Normal damage 50 -> reduksi 20% = 40 damage masuk
         kura.takeDamage(50);
-        assertEquals(160, kura.getHp(), "Kura-kura harus mereduksi damage masuk sebesar 20%");
+        assertEquals(180, kura.getHp(), "Kura-kura harus mereduksi damage masuk sebesar 20%");
     }
 
     @Test
     public void testCentaurExecutionFinisher() {
         Centaur centaur = new Centaur();
-        assertEquals(75, centaur.getDamage());
+        assertEquals(55, centaur.getDamage());
         AttackContext ctx = new AttackContext(new ArrayList<>(), true);
 
         // Target HP tinggi (> 30%)
-        Ayam targetSehat = new Ayam(); // maxHp 80
+        Ayam targetSehat = new Ayam(); // maxHp 100
         targetSehat.setPosition(1.0);
         centaur.attack(targetSehat, 1.0, ctx);
-        // Damage normal = 75 -> Ayam HP 80 - 75 = 5
-        assertEquals(5, targetSehat.getHp());
+        // Damage normal = 55 -> Ayam HP 100 - 55 = 45
+        assertEquals(45, targetSehat.getHp());
 
         // Target HP kritis (< 30%)
-        KuraKura targetKritis = new KuraKura(); // maxHp 200, 30% = 60
-        targetKritis.takeDamage(180); // HP tinggal 56 (kritis < 60)
-        int hpSebelum = targetKritis.getHp();
+        KuraKura targetKritis = new KuraKura(); // maxHp 220, 30% = 66
+        targetKritis.takeDamage(210); // HP tinggal 52 (kritis < 66)
 
         centaur.attack(targetKritis, 1.0, ctx);
-        // Execute: 75 + 37 = 112 dmg -> KuraKura (-20%) = 89 dmg -> mati
+        // Execute: 55 + 27 = 82 dmg -> KuraKura (-20%) = 65 dmg -> mati
         assertTrue(targetKritis.isDefeated());
     }
 
     @Test
     public void testGodzillaAoE() {
         Godzilla godzilla = new Godzilla();
-        assertEquals(70, godzilla.getDamage());
+        assertEquals(80, godzilla.getDamage());
 
         List<Animal> enemies = new ArrayList<>();
         Ayam primary = new Ayam();
@@ -126,28 +125,28 @@ public class AnimalTest {
         AttackContext ctx = new AttackContext(enemies, true);
         godzilla.attack(primary, 1.0, ctx);
 
-        assertEquals(10, primary.getHp()); // 80 - 70 = 10
-        assertEquals(10, secondary.getHp()); // AoE hit: 80 - 70 = 10
-        assertEquals(80, farAway.getHp()); // Far away untouched
+        assertEquals(20, primary.getHp()); // 100 - 80 = 20
+        assertEquals(20, secondary.getHp()); // AoE hit: 100 - 80 = 20
+        assertEquals(100, farAway.getHp()); // Far away untouched
     }
 
     @Test
     public void testNagaArmorPiercing() {
         Naga naga = new Naga();
-        assertEquals(70, naga.getDamage());
+        assertEquals(65, naga.getDamage());
         AttackContext ctx = new AttackContext(new ArrayList<>(), true);
 
         // Target non-heavy
         Ayam ayam = new Ayam();
         naga.attack(ayam, 2.0, ctx);
-        assertEquals(10, ayam.getHp()); // 80 - 70 = 10
+        assertEquals(35, ayam.getHp()); // 100 - 65 = 35
 
-        // Target heavy (KuraKura) -> Naga 1.5x damage = 105 dmg -> KuraKura -20% = 84 dmg
+        // Target heavy (KuraKura) -> Naga 1.5x damage = 98 dmg -> KuraKura -20% = 78 dmg
         KuraKura kura = new KuraKura();
         int initialHp = kura.getHp();
         naga.attack(kura, 2.0, ctx);
         int damageReceived = initialHp - kura.getHp();
-        assertEquals(84, damageReceived);
+        assertEquals(78, damageReceived);
     }
 
     @Test

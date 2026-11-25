@@ -12,7 +12,7 @@ import lamana.model.animal.AttackContext;
 public class Landak extends RangedAnimal implements SpecialAbility {
 
     public Landak() {
-        super("Landak", 90, 15, 3, 2, 40, 12, 12, 1);
+        super("Landak", 75, 14, 3, 2, 40, 12, 12, 1);
     }
 
     @Override

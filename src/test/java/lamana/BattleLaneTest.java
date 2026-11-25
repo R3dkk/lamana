@@ -60,14 +60,18 @@ public class BattleLaneTest {
         lane.addPlayerAnimal(playerTank);
         lane.addEnemyAnimal(enemyTank);
 
-        // Simulasi bergerak mendekati satu sama lain dan bertarung (8 detik)
-        for (int i = 0; i < 8; i++) {
+        // Simulasi bergerak mendekati satu sama lain dan bertarung (9 detik)
+        for (int i = 0; i < 9; i++) {
             lane.update(1000);
+            if (i == 0) {
+                assertTrue(playerTank.hasMovedThisTick(), "Unit yang baru berjalan harus berstatus movedThisTick");
+            }
             if (!lane.getPlayerAnimals().isEmpty() && !lane.getEnemyAnimals().isEmpty()) {
                 assertTrue(playerTank.getPosition() <= enemyTank.getPosition(),
                         "Unit terdepan player tidak boleh melewati unit musuh saat berhadapan");
             }
         }
+        assertFalse(playerTank.hasMovedThisTick(), "Unit yang sudah berhenti di depan musuh tidak boleh berstatus bergerak");
     }
 
     @Test

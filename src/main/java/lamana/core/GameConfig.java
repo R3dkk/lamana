@@ -3,7 +3,7 @@ package lamana.core;
 public final class GameConfig {
     private GameConfig() {}
 
-    public static final double LANE_LENGTH = 20.0;
+    public static final double LANE_LENGTH = 30.0;
     public static final double UNIT_SPACING = 1.0;
 
     public static final int BASE_HP = 1000;

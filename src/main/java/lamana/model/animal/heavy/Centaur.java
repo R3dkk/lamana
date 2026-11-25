@@ -12,7 +12,7 @@ import lamana.model.animal.AttackContext;
 public class Centaur extends HeavyAnimal implements SpecialAbility {
 
     public Centaur() {
-        super("Centaur", 650, 75, 2, 2, 300, 90, 50, 3);
+        super("Centaur", 750, 55, 2, 2, 300, 90, 50, 3);
     }
 
     @Override

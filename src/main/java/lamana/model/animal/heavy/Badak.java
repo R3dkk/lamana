@@ -14,7 +14,7 @@ import lamana.model.animal.AttackContext;
 public class Badak extends HeavyAnimal implements SpecialAbility {
 
     public Badak() {
-        super("Badak", 400, 40, 2, 120, 45, 28, 2);
+        super("Badak", 450, 22, 2, 120, 45, 28, 2);
     }
 
     @Override

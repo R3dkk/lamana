@@ -10,7 +10,7 @@ import lamana.contract.SpecialAbility;
 public class KuraKura extends HeavyAnimal implements SpecialAbility {
 
     public KuraKura() {
-        super("Kura-kura", 200, 15, 2, 50, 18, 15, 1);
+        super("Kura-kura", 220, 10, 2, 50, 18, 15, 1);
     }
 
     /**
