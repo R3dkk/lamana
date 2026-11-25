@@ -443,7 +443,7 @@ public class GamePanel extends JPanel {
     }
 
     private static BufferedImage loadArenaImage() {
-        try (InputStream input = GamePanel.class.getResourceAsStream("/assets/background/arena.png")) {
+        try (InputStream input = GamePanel.class.getResourceAsStream("/assets/background/bg real.png")) {
             return input == null ? null : ImageIO.read(input);
         } catch (IOException ignored) {
             return null;
