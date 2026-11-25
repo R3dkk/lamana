@@ -204,40 +204,28 @@ public class GamePanel extends JPanel {
         GameArt.drawBase(g, rightX, groundY, false, baseSize, enemy.getLevel());
 
         int hudTopY = groundY - (int) (baseSize * 1.28) - 26;
-        drawBaseStatus(g, "PLAYER · ERA " + player.getLevel(), player, leftX, hudTopY,
-                new Color(67, 189, 225), new Color(190, 236, 244));
-        drawBaseStatus(g, "MUSUH · ERA " + enemy.getLevel(), enemy, rightX, hudTopY,
-                new Color(245, 109, 97), new Color(255, 206, 196));
+        drawBaseStatus(g, player, leftX, hudTopY, new Color(67, 189, 225));
+        drawBaseStatus(g, enemy, rightX, hudTopY, new Color(245, 109, 97));
     }
 
-    private static void drawBaseStatus(Graphics2D g, String title, Base base, int centerX, int y,
-                                       Color barColor, Color textColor) {
-        int boxW = 114;
-        int boxH = 38;
-        int boxX = centerX - boxW / 2;
-        int boxY = y - boxH;
-        g.setColor(new Color(8, 24, 32, 200));
-        g.fillRoundRect(boxX, boxY, boxW, boxH, 8, 8);
-        g.setColor(new Color(62, 92, 104, 180));
-        g.drawRoundRect(boxX, boxY, boxW, boxH, 8, 8);
-
-        g.setFont(new Font("Dialog", Font.BOLD, 9));
-        FontMetrics fm = g.getFontMetrics();
-        g.setColor(textColor);
-        g.drawString(title, centerX - fm.stringWidth(title) / 2, boxY + 12);
-
-        String hpText = base.getHp() + " / " + base.getMaxHp() + " HP";
-        g.setColor(Color.WHITE);
-        g.drawString(hpText, centerX - fm.stringWidth(hpText) / 2, boxY + 23);
-
-        int barW = boxW - 14;
-        int barX = boxX + 7;
-        int barY = boxY + 28;
-        g.setColor(new Color(34, 51, 61));
-        g.fillRoundRect(barX, barY, barW, 6, 4, 4);
+    private static void drawBaseStatus(Graphics2D g, Base base, int centerX, int y, Color barColor) {
+        int barW = 82;
+        int barX = centerX - barW / 2;
+        int barY = y - 3;
+        g.setColor(new Color(22, 34, 37, 210));
+        g.fillRect(barX, barY, barW, 4);
         int fillW = (int) Math.round((double) base.getHp() / Math.max(1, base.getMaxHp()) * barW);
         g.setColor(barColor);
-        g.fillRoundRect(barX, barY, fillW, 6, 4, 4);
+        g.fillRect(barX, barY, fillW, 4);
+
+        int pipSize = 5;
+        int gap = 3;
+        int pipsW = pipSize * 3 + gap * 2;
+        int pipX = centerX - pipsW / 2;
+        for (int i = 0; i < 3; i++) {
+            g.setColor(i < base.getLevel() ? barColor : new Color(33, 47, 48, 190));
+            g.fillRect(pipX + i * (pipSize + gap), barY - 8, pipSize, pipSize);
+        }
     }
 
     private void drawUnits(Graphics2D g, int width, int height) {
@@ -325,14 +313,6 @@ public class GamePanel extends JPanel {
         int fillWidth = (int) Math.round((double) animal.getHp() / animal.getMaxHp() * barWidth);
         g.setColor(playerSide ? new Color(109, 224, 191) : new Color(255, 133, 112));
         g.fillRoundRect(x - barWidth / 2, groundY - size - 9, fillWidth, 5, 4, 4);
-        g.setFont(new Font("Dialog", Font.BOLD, 9));
-        FontMetrics metrics = g.getFontMetrics();
-        String name = animal.getName().toUpperCase();
-        int textWidth = metrics.stringWidth(name) + 10;
-        g.setColor(new Color(10, 30, 35, 195));
-        g.fillRoundRect(x - textWidth / 2, groundY + 3, textWidth, 14, 6, 6);
-        g.setColor(Color.WHITE);
-        g.drawString(name, x - metrics.stringWidth(name) / 2, groundY + 13);
     }
 
     private static final class UnitVisual {
@@ -371,11 +351,8 @@ public class GamePanel extends JPanel {
             default:
                 return;
         }
-        g.setFont(new Font("Dialog", Font.BOLD, Math.min(48, Math.max(30, width / 24))));
+        g.setFont(new Font("Dialog", Font.BOLD, Math.min(34, Math.max(24, width / 32))));
         FontMetrics metrics = g.getFontMetrics();
-        g.setColor(new Color(7, 23, 31, 220));
-        g.fillRoundRect((width - metrics.stringWidth(message) - 60) / 2,
-                height / 2 - 49, metrics.stringWidth(message) + 60, 90, 24, 24);
         g.setColor(accent);
         g.drawString(message, (width - metrics.stringWidth(message)) / 2, height / 2 + 10);
     }

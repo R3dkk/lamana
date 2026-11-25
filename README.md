@@ -18,6 +18,20 @@ Tugas Akhir Pemrograman Berorientasi Objek (PBO) — Semester 3
 
 ## 2. Cara Menjalankan
 
+### Jalankan versi terbaru
+
+Setiap kali source code berubah, jalankan `run-game.cmd` dari folder proyek
+(bisa dengan klik dua kali). Script ini mengompilasi source terbaru, menyalin
+aset, memperbarui JAR, lalu membuka game. Script membutuhkan JDK 21 dan tidak
+menjalankan test.
+
+```powershell
+.\run-game.cmd
+```
+
+Tutup jendela game yang sedang terbuka sebelum menjalankan script lagi agar
+hanya ada satu jendela game.
+
 ### Opsi A — Menggunakan Maven Wrapper (Direkomendasikan)
 
 Proyek ini sudah dilengkapi dengan Maven Wrapper (`mvnw` / `mvnw.cmd`). Cukup buka terminal di folder proyek:

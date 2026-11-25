@@ -8,69 +8,70 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.util.Locale;
 
-/** Slim top bar for player Gold, EXP, and upgrade progress. */
+/** Compact resource row: icons, values, and a single progress strip. */
 public class HUDPanel extends JPanel {
+    private static final Color GOLD = new Color(232, 187, 91);
+    private static final Color EXP = new Color(116, 204, 160);
+
     private final JLabel goldLabel;
     private final JLabel expLabel;
     private final JProgressBar expProgress;
 
     public HUDPanel() {
-        super(new BorderLayout());
+        super(new BorderLayout(14, 0));
         setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder(0, 18, 8, 18));
-        setPreferredSize(new Dimension(1000, 56));
+        setBorder(BorderFactory.createEmptyBorder(8, 14, 4, 14));
+        setPreferredSize(new Dimension(1000, 42));
 
-        JPanel economyCard = new JPanel(new BorderLayout(12, 5));
-        economyCard.setBackground(new Color(20, 38, 51));
-        economyCard.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(49, 73, 85)),
-                BorderFactory.createEmptyBorder(7, 14, 7, 14)));
-
-        JPanel figures = new JPanel(new GridLayout(1, 2, 16, 0));
-        figures.setOpaque(false);
-        goldLabel = new JLabel("GOLD  120");
-        expLabel = new JLabel("EXP  0 / 100");
-        styleFigure(goldLabel, new Color(246, 198, 106));
-        styleFigure(expLabel, new Color(149, 220, 188));
-        figures.add(goldLabel);
-        figures.add(expLabel);
+        JPanel values = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 0));
+        values.setOpaque(false);
+        goldLabel = makeValueLabel("120", UiIcon.Type.GOLD, GOLD);
+        expLabel = makeValueLabel("0", UiIcon.Type.EXP, EXP);
+        values.add(goldLabel);
+        values.add(expLabel);
+        add(values, BorderLayout.CENTER);
 
         expProgress = new JProgressBar(0, 1000);
         expProgress.setBorderPainted(false);
-        expProgress.setForeground(new Color(93, 190, 145));
-        expProgress.setBackground(new Color(37, 58, 69));
-        expProgress.setPreferredSize(new Dimension(100, 6));
-
-        economyCard.add(figures, BorderLayout.CENTER);
-        economyCard.add(expProgress, BorderLayout.SOUTH);
-        add(economyCard, BorderLayout.CENTER);
+        expProgress.setStringPainted(false);
+        expProgress.setForeground(EXP);
+        expProgress.setBackground(new Color(70, 86, 85));
+        expProgress.setPreferredSize(new Dimension(170, 5));
+        expProgress.setToolTipText("Progres EXP ke upgrade markas berikutnya");
+        add(expProgress, BorderLayout.EAST);
     }
 
-    private static void styleFigure(JLabel label, Color color) {
-        label.setForeground(color);
-        label.setFont(new Font("Dialog", Font.BOLD, 14));
+    private static JLabel makeValueLabel(String value, UiIcon.Type icon, Color color) {
+        JLabel label = new JLabel(value, new UiIcon(icon, color), SwingConstants.LEFT);
+        label.setIconTextGap(6);
+        label.setForeground(Color.WHITE);
+        label.setFont(new Font("Dialog", Font.BOLD, 13));
+        return label;
     }
 
     public void refresh(GameController game) {
         if (game == null) return;
         Base player = game.getPlayerBase();
         MoneyExp resources = game.getPlayerResources();
-        goldLabel.setText(String.format(Locale.ROOT, "GOLD  %d  (+%d/s)",
-                resources.getMoney(), game.getPassiveIncomePerSecond()));
+        goldLabel.setText(String.format(Locale.ROOT, "%d", resources.getMoney()));
+        goldLabel.setToolTipText(String.format(Locale.ROOT, "Emas · +%d/detik", game.getPassiveIncomePerSecond()));
+
         int needed = player.getExpNeededForNextLevel();
+        expLabel.setText(String.format(Locale.ROOT, "%d", resources.getExp()));
         if (needed == 0) {
-            expLabel.setText(String.format(Locale.ROOT, "ERA MAX  ·  %d EXP", resources.getExp()));
             expProgress.setValue(1000);
+            expLabel.setToolTipText("EXP · Era maksimum");
         } else {
-            expLabel.setText(String.format(Locale.ROOT, "EXP  %d / %d", resources.getExp(), needed));
             expProgress.setValue((int) Math.min(1000, resources.getExp() * 1000L / needed));
+            expLabel.setToolTipText(String.format(Locale.ROOT, "EXP · %d dari %d", resources.getExp(), needed));
         }
     }
 }
