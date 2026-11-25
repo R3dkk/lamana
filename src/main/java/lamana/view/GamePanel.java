@@ -20,6 +20,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -30,11 +31,15 @@ public class GamePanel extends JPanel {
     private static final BufferedImage ARENA_IMAGE = loadArenaImage();
     private static final long ANIMATION_FRAME_MS = 110L;
     private static final long ACTION_ANIMATION_MS = ANIMATION_FRAME_MS * 4L;
+    private static final long TURRET_PROJECTILE_MS = 260L;
 
     private GameController game;
     private boolean paused;
     private long animationTimeMs;
     private final Map<Animal, UnitVisual> unitVisuals = new IdentityHashMap<>();
+    private final List<TurretProjectile> turretProjectiles = new ArrayList<>();
+    private long playerMuzzleFlashUntilMs;
+    private long enemyMuzzleFlashUntilMs;
 
     public GamePanel(GameController game) {
         this.game = game;
@@ -48,6 +53,9 @@ public class GamePanel extends JPanel {
         this.paused = false;
         this.animationTimeMs = 0;
         this.unitVisuals.clear();
+        this.turretProjectiles.clear();
+        this.playerMuzzleFlashUntilMs = 0;
+        this.enemyMuzzleFlashUntilMs = 0;
         repaint();
     }
 
@@ -57,7 +65,21 @@ public class GamePanel extends JPanel {
     }
 
     public void advanceAnimation(long deltaMs) {
-        if (!paused && deltaMs > 0) animationTimeMs += deltaMs;
+        if (paused || deltaMs <= 0) return;
+        animationTimeMs += deltaMs;
+        for (lamana.model.battle.BattleLane.TurretShot shot
+                : game.getBattleLane().getTurretShotsThisUpdate()) {
+            turretProjectiles.add(new TurretProjectile(shot.isPlayerSide(),
+                    shot.getTargetPosition(), animationTimeMs));
+            if (shot.isPlayerSide()) playerMuzzleFlashUntilMs = animationTimeMs + 90L;
+            else enemyMuzzleFlashUntilMs = animationTimeMs + 90L;
+        }
+        Iterator<TurretProjectile> projectileIterator = turretProjectiles.iterator();
+        while (projectileIterator.hasNext()) {
+            if (animationTimeMs - projectileIterator.next().startedAtMs >= TURRET_PROJECTILE_MS) {
+                projectileIterator.remove();
+            }
+        }
     }
 
     @Override
@@ -73,6 +95,7 @@ public class GamePanel extends JPanel {
         drawBattleLane(g, width, height);
         drawBases(g, width, height);
         drawUnits(g, width, height);
+        drawTurretProjectiles(g, width, height);
         if (game.getState() != GameState.PLAYING) drawGameOverOverlay(g, width, height);
         g.dispose();
     }
@@ -200,8 +223,10 @@ public class GamePanel extends JPanel {
 
         Base player = game.getPlayerBase();
         Base enemy = game.getEnemyBase();
-        GameArt.drawBase(g, leftX, groundY, true, baseSize, player.getLevel());
-        GameArt.drawBase(g, rightX, groundY, false, baseSize, enemy.getLevel());
+        GameArt.drawBase(g, leftX, groundY, true, baseSize, player.getLevel(),
+                animationTimeMs < playerMuzzleFlashUntilMs);
+        GameArt.drawBase(g, rightX, groundY, false, baseSize, enemy.getLevel(),
+                animationTimeMs < enemyMuzzleFlashUntilMs);
 
         int hudTopY = groundY - (int) (baseSize * 1.28) - 26;
         drawBaseStatus(g, player, leftX, hudTopY, new Color(67, 189, 225));
@@ -255,11 +280,55 @@ public class GamePanel extends JPanel {
             }
         }
 
-        for (Animal animal : enemyUnits) drawVisual(g, animal, unitVisuals.get(animal), laneLeft, laneWidth, groundY, size);
-        for (Animal animal : playerUnits) drawVisual(g, animal, unitVisuals.get(animal), laneLeft, laneWidth, groundY - 4, size);
+        for (Animal animal : enemyUnits) {
+            drawVisual(g, animal, unitVisuals.get(animal), laneLeft, laneWidth, groundY, size);
+        }
+        for (Animal animal : playerUnits) {
+            drawVisual(g, animal, unitVisuals.get(animal), laneLeft, laneWidth, groundY - 4, size);
+        }
         for (Map.Entry<Animal, UnitVisual> entry : unitVisuals.entrySet()) {
             if (entry.getValue().dead) drawVisual(g, entry.getKey(), entry.getValue(), laneLeft, laneWidth, groundY, size);
         }
+    }
+
+    private void drawTurretProjectiles(Graphics2D g, int width, int height) {
+        if (turretProjectiles.isEmpty()) return;
+        int top = (int) (height * .65);
+        int baseGroundY = top + 93;
+        int baseSize = Math.max(70, Math.min(103, width / 13));
+        int baseLeftX = Math.max(66, (int) (width * .055));
+        int baseRightX = width - baseLeftX;
+        int baseTopY = baseGroundY - (int) (baseSize * 1.28);
+        int laneLeft = Math.max(65, (int) (width * .075)) + 25;
+        int laneWidth = width - laneLeft * 2;
+        int unitSize = Math.max(72, Math.min(108, width / 14));
+        int targetY = top + 90 - unitSize / 2;
+
+        Graphics2D shots = (Graphics2D) g.create();
+        shots.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        shots.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        for (TurretProjectile projectile : turretProjectiles) {
+            double progress = Math.min(1.0,
+                    (animationTimeMs - projectile.startedAtMs) / (double) TURRET_PROJECTILE_MS);
+            int baseX = projectile.playerSide ? baseLeftX : baseRightX;
+            int baseLevel = projectile.playerSide
+                    ? game.getPlayerBase().getLevel() : game.getEnemyBase().getLevel();
+            java.awt.Point muzzle = GameArt.turretMuzzlePoint(baseX, baseTopY, baseSize,
+                    projectile.playerSide, baseLevel);
+            int targetX = laneLeft + (int) Math.round(laneWidth
+                    * projectile.targetPosition / GameConfig.LANE_LENGTH);
+            int shotX = (int) Math.round(muzzle.x + (targetX - muzzle.x) * progress);
+            int shotY = (int) Math.round(muzzle.y + (targetY - muzzle.y) * progress);
+            int alpha = Math.max(75, 255 - (int) (progress * 150));
+
+            shots.setColor(new Color(255, 178, 62, alpha));
+            shots.drawLine(muzzle.x, muzzle.y, shotX, shotY);
+            shots.setColor(new Color(255, 217, 118, alpha));
+            shots.fillOval(shotX - 5, shotY - 5, 10, 10);
+            shots.setColor(new Color(255, 247, 204, alpha));
+            shots.fillOval(shotX - 2, shotY - 2, 4, 4);
+        }
+        shots.dispose();
     }
 
     private void registerActiveUnit(Animal animal, boolean playerSide, Map<Animal, Boolean> active) {
@@ -291,7 +360,7 @@ public class GamePanel extends JPanel {
     private void drawVisual(Graphics2D g, Animal animal, UnitVisual visual,
                             int laneLeft, int laneWidth, int groundY, int size) {
         if (visual == null) return;
-        int x = laneLeft + (int) (laneWidth * visual.position / GameConfig.LANE_LENGTH);
+        int x = positionToScreenX(visual.position, laneLeft, laneWidth);
         int frame;
         if (visual.action.equals("idle")) {
             frame = 0;
@@ -301,6 +370,10 @@ public class GamePanel extends JPanel {
             frame = (int) Math.min(3, Math.max(0, (animationTimeMs - visual.actionStartedMs) / ANIMATION_FRAME_MS));
         }
         drawUnit(g, animal, x, groundY, size, visual.playerSide, visual.action, frame);
+    }
+
+    private static int positionToScreenX(double position, int laneLeft, int laneWidth) {
+        return laneLeft + (int) (laneWidth * position / GameConfig.LANE_LENGTH);
     }
 
     private void drawUnit(Graphics2D g, Animal animal, int x, int groundY, int size,
@@ -327,6 +400,18 @@ public class GamePanel extends JPanel {
             this.position = position;
             this.action = action;
             this.actionStartedMs = actionStartedMs;
+        }
+    }
+
+    private static final class TurretProjectile {
+        private final boolean playerSide;
+        private final double targetPosition;
+        private final long startedAtMs;
+
+        TurretProjectile(boolean playerSide, double targetPosition, long startedAtMs) {
+            this.playerSide = playerSide;
+            this.targetPosition = targetPosition;
+            this.startedAtMs = startedAtMs;
         }
     }
 

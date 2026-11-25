@@ -74,6 +74,7 @@ public abstract class Animal implements Attackable {
     public int getRange() { return range; }
     public int getEffectiveRange() { return this.range; }
     public int getMovementSpeed() { return movementSpeed; }
+    public double getCollisionRadius() { return 1.45; }
     public int getCost() { return cost; }
     public int getRewardMoney() { return rewardMoney; }
     public int getRewardExp() { return rewardExp; }

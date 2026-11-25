@@ -27,6 +27,9 @@ public abstract class RangedAnimal extends Animal {
     public int getRequiredBaseLevel() { return requiredBaseLevel; }
 
     @Override
+    public double getCollisionRadius() { return 1.35; }
+
+    @Override
     public boolean attack(Attackable target, double distance, AttackContext context) {
         if (target == null || target.isDefeated() || isDefeated()) return false;
         if (distance < 0 || distance > getEffectiveRange()) return false;

@@ -4,7 +4,7 @@ public final class GameConfig {
     private GameConfig() {}
 
     public static final double LANE_LENGTH = 30.0;
-    public static final double UNIT_SPACING = 1.0;
+    public static final double UNIT_QUEUE_MARGIN = 0.15;
 
     public static final int BASE_HP = 1000;
     public static final int BASE_MAX_LEVEL = 3;

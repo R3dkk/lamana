@@ -32,6 +32,9 @@ public abstract class MeleeAnimal extends Animal {
     @Override
     public int getRequiredBaseLevel() { return requiredBaseLevel; }
 
+    @Override
+    public double getCollisionRadius() { return 1.5; }
+
     /** Default melee attack — subclass dapat override untuk perilaku unik. */
     @Override
     public boolean attack(Attackable target, double distance, AttackContext context) {

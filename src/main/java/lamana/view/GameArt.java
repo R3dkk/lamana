@@ -7,8 +7,10 @@ import javax.imageio.ImageIO;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.awt.geom.Path2D;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -152,7 +154,8 @@ final class GameArt {
                 Math.max(3, height / 18), Math.max(3, height / 18));
     }
 
-    static void drawBase(Graphics2D source, int centerX, int groundY, boolean playerSide, int size, int level) {
+    static void drawBase(Graphics2D source, int centerX, int groundY, boolean playerSide,
+                         int size, int level, boolean firing) {
         Graphics2D g = (Graphics2D) source.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         int width = size;
@@ -199,12 +202,12 @@ final class GameArt {
         }
 
         // Mounted Turret / Meriam pertahanan di atas benteng (sesuai komposisi Base -> Turret)
-        drawMountedTurret(g, centerX, y, width, playerSide, level);
+        drawMountedTurret(g, centerX, y, width, playerSide, level, firing);
         g.dispose();
     }
 
     private static void drawMountedTurret(Graphics2D g, int centerX, int baseTopY, int size,
-                                          boolean playerSide, int level) {
+                                          boolean playerSide, int level, boolean firing) {
         int dir = playerSide ? 1 : -1;
         int mountY = baseTopY + Math.max(8, size / 6);
         int domeW = Math.max(24, size / 3);
@@ -243,6 +246,30 @@ final class GameArt {
         g.fillArc(centerX - domeW / 2, mountY - domeH, domeW, domeH * 2, 0, 180);
         g.setColor(accent);
         g.fillOval(centerX - 4 + dir * 2, mountY - domeH / 2 - 3, 7, 7);
+
+        if (firing) {
+            Point muzzle = turretMuzzlePoint(centerX, baseTopY, size, playerSide, level);
+            Path2D flash = new Path2D.Double();
+            flash.moveTo(muzzle.x, muzzle.y - 5);
+            flash.lineTo(muzzle.x + dir * 14, muzzle.y);
+            flash.lineTo(muzzle.x, muzzle.y + 5);
+            flash.closePath();
+            g.setColor(new Color(255, 183, 63, 230));
+            g.fill(flash);
+            g.setColor(new Color(255, 239, 164));
+            g.fillOval(muzzle.x - 2, muzzle.y - 2, 4, 4);
+        }
+    }
+
+    static Point turretMuzzlePoint(int centerX, int baseTopY, int size, boolean playerSide, int level) {
+        int mountY = baseTopY + Math.max(8, size / 6);
+        int domeH = Math.max(16, size / 4);
+        int barrelLen = Math.max(22, size / 3) + (level - 1) * 5;
+        int barrelH = level >= 2 ? 7 : 5;
+        int bx = playerSide ? centerX + 2 : centerX - 2 - barrelLen;
+        int by = mountY - domeH / 2 - barrelH / 2;
+        int muzzleX = playerSide ? bx + barrelLen - 3 : bx - 2;
+        return new Point(playerSide ? muzzleX + 5 : muzzleX, by + barrelH / 2);
     }
 
     private static BufferedImage image(String resourcePath) {

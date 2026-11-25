@@ -27,6 +27,7 @@ public class BattleLane {
 
     private final List<Animal> playerUnits = new ArrayList<>();
     private final List<Animal> enemyUnits  = new ArrayList<>();
+    private final List<TurretShot> turretShotsThisUpdate = new ArrayList<>();
 
     public BattleLane(
             Base playerBase,
@@ -61,6 +62,7 @@ public class BattleLane {
         if (deltaTimeMillis < 0) {
             throw new IllegalArgumentException("Delta waktu tidak boleh negatif.");
         }
+        turretShotsThisUpdate.clear();
 
         // 1. Advance stun & cooldown timers
         for (Animal a : playerUnits) {
@@ -146,19 +148,22 @@ public class BattleLane {
             if (target == null) {
                 // Menuju base musuh
                 if (movingRight) {
-                    double stopPosition = GameConfig.LANE_LENGTH - unit.getRange();
+                    double stopPosition = GameConfig.LANE_LENGTH
+                            - unit.getRange() - unit.getCollisionRadius();
                     newPosition = Math.min(stopPosition, currentPos + step);
                     newPosition = Math.max(currentPos, newPosition);
                 } else {
-                    double stopPosition = unit.getRange();
+                    double stopPosition = unit.getRange() + unit.getCollisionRadius();
                     newPosition = Math.max(stopPosition, currentPos - step);
                     newPosition = Math.min(currentPos, newPosition);
                 }
             } else if (movingRight) {
-                double stopPosition = target.getPosition() - unit.getRange();
+                double stopPosition = target.getPosition() - unit.getRange()
+                        - unit.getCollisionRadius() - target.getCollisionRadius();
                 newPosition = Math.max(currentPos, Math.min(stopPosition, currentPos + step));
             } else {
-                double stopPosition = target.getPosition() + unit.getRange();
+                double stopPosition = target.getPosition() + unit.getRange()
+                        + unit.getCollisionRadius() + target.getCollisionRadius();
                 newPosition = Math.min(currentPos, Math.max(stopPosition, currentPos - step));
             }
 
@@ -175,7 +180,7 @@ public class BattleLane {
         Animal playerFront = playerUnits.get(0);
         Animal enemyFront  = enemyUnits.get(0);
 
-        double minimumGap = Math.max(1.0, Math.min(playerFront.getRange(), enemyFront.getRange()));
+        double minimumGap = playerFront.getCollisionRadius() + enemyFront.getCollisionRadius();
         double currentGap = enemyFront.getPosition() - playerFront.getPosition();
         double proposedPlayer = proposedPlayerPositions.get(playerFront);
         double proposedEnemy  = proposedEnemyPositions.get(enemyFront);
@@ -197,6 +202,7 @@ public class BattleLane {
             Map<Animal, Double> proposedPositions,
             boolean movingRight) {
         double leadingPosition = 0;
+        Animal leadingUnit = null;
         boolean isFirstUnit = true;
 
         for (Animal unit : units) {
@@ -209,14 +215,19 @@ public class BattleLane {
                         : Math.min(unit.getPosition(), proposed));
                 isFirstUnit = false;
             } else if (movingRight) {
+                double spacing = leadingUnit.getCollisionRadius() + unit.getCollisionRadius()
+                        + GameConfig.UNIT_QUEUE_MARGIN;
                 unit.setPosition(Math.max(unit.getPosition(),
-                        Math.min(proposed, leadingPosition - GameConfig.UNIT_SPACING)));
+                        Math.min(proposed, leadingPosition - spacing)));
             } else {
+                double spacing = leadingUnit.getCollisionRadius() + unit.getCollisionRadius()
+                        + GameConfig.UNIT_QUEUE_MARGIN;
                 unit.setPosition(Math.min(unit.getPosition(),
-                        Math.max(proposed, leadingPosition + GameConfig.UNIT_SPACING)));
+                        Math.max(proposed, leadingPosition + spacing)));
             }
             unit.setPosition(Math.max(0.0, Math.min(GameConfig.LANE_LENGTH, unit.getPosition())));
             leadingPosition = unit.getPosition();
+            leadingUnit = unit;
         }
     }
 
@@ -255,7 +266,8 @@ public class BattleLane {
 
             Animal targetAnimal = findNearestOpponentAhead(attacker, enemyUnits, true);
             if (targetAnimal != null) {
-                double dist = Math.abs(targetAnimal.getPosition() - attacker.getPosition());
+                double dist = Math.max(0.0, Math.abs(targetAnimal.getPosition() - attacker.getPosition())
+                        - attacker.getCollisionRadius() - targetAnimal.getCollisionRadius());
                 if (dist <= attacker.getEffectiveRange()) {
                     if (attacker.attack(targetAnimal, dist, playerCtx)) {
                         attacker.consumeAttack();
@@ -263,7 +275,8 @@ public class BattleLane {
                     }
                 }
             } else {
-                double distToBase = GameConfig.LANE_LENGTH - attacker.getPosition();
+                double distToBase = Math.max(0.0, GameConfig.LANE_LENGTH - attacker.getPosition()
+                        - attacker.getCollisionRadius());
                 if (distToBase <= attacker.getEffectiveRange()) {
                     if (attacker.attack(enemyBase, distToBase, playerCtx)) {
                         attacker.consumeAttack();
@@ -280,7 +293,8 @@ public class BattleLane {
 
             Animal targetAnimal = findNearestOpponentAhead(attacker, playerUnits, false);
             if (targetAnimal != null) {
-                double dist = Math.abs(targetAnimal.getPosition() - attacker.getPosition());
+                double dist = Math.max(0.0, Math.abs(targetAnimal.getPosition() - attacker.getPosition())
+                        - attacker.getCollisionRadius() - targetAnimal.getCollisionRadius());
                 if (dist <= attacker.getEffectiveRange()) {
                     if (attacker.attack(targetAnimal, dist, enemyCtx)) {
                         attacker.consumeAttack();
@@ -288,7 +302,7 @@ public class BattleLane {
                     }
                 }
             } else {
-                double distToBase = attacker.getPosition();
+                double distToBase = Math.max(0.0, attacker.getPosition() - attacker.getCollisionRadius());
                 if (distToBase <= attacker.getEffectiveRange()) {
                     if (attacker.attack(playerBase, distToBase, enemyCtx)) {
                         attacker.consumeAttack();
@@ -309,6 +323,7 @@ public class BattleLane {
         if (pt.isReadyToFire()) {
             Animal target = findNearestEnemyToPlayerBase();
             if (target != null && target.getPosition() <= pt.getRange()) {
+                turretShotsThisUpdate.add(new TurretShot(true, target.getPosition()));
                 target.takeDamage(pt.getDamage());
                 pt.consumeShot();
             }
@@ -318,6 +333,7 @@ public class BattleLane {
         if (et.isReadyToFire()) {
             Animal target = findNearestPlayerToEnemyBase();
             if (target != null && (GameConfig.LANE_LENGTH - target.getPosition()) <= et.getRange()) {
+                turretShotsThisUpdate.add(new TurretShot(false, target.getPosition()));
                 target.takeDamage(et.getDamage());
                 et.consumeShot();
             }
@@ -391,11 +407,28 @@ public class BattleLane {
         return enemyUnits.isEmpty() ? null : enemyUnits.get(0);
     }
 
+    public List<TurretShot> getTurretShotsThisUpdate() {
+        return new ArrayList<>(turretShotsThisUpdate);
+    }
+
     public boolean isPlayerDefeated() {
         return playerUnits.isEmpty();
     }
 
     public boolean isEnemyDefeated() {
         return enemyUnits.isEmpty();
+    }
+
+    public static final class TurretShot {
+        private final boolean playerSide;
+        private final double targetPosition;
+
+        private TurretShot(boolean playerSide, double targetPosition) {
+            this.playerSide = playerSide;
+            this.targetPosition = targetPosition;
+        }
+
+        public boolean isPlayerSide() { return playerSide; }
+        public double getTargetPosition() { return targetPosition; }
     }
 }
