@@ -21,6 +21,7 @@ import java.util.Map;
 final class GameArt {
     private static final Map<String, BufferedImage> IMAGE_CACHE = new HashMap<>();
     private static final Map<String, BufferedImage[]> FRAME_CACHE = new HashMap<>();
+    private static BufferedImage turretImage;
     private GameArt() {}
 
     static String assetKey(String value) {
@@ -67,9 +68,6 @@ final class GameArt {
         } else {
             drawFallbackCreature(g, centerX, groundY, height, playerSide, faction);
         }
-        g.setColor(faction);
-        g.setStroke(new BasicStroke(2f));
-        g.drawLine(centerX - drawW / 4, groundY + 3, centerX + drawW / 4, groundY + 3);
         g.dispose();
     }
 
@@ -209,43 +207,22 @@ final class GameArt {
     private static void drawMountedTurret(Graphics2D g, int centerX, int baseTopY, int size,
                                           boolean playerSide, int level, boolean firing) {
         int dir = playerSide ? 1 : -1;
+        BufferedImage image = turretImage();
+        if (image == null) return;
+
+        int drawWidth = Math.max(48, (int) Math.round(size * 0.92));
+        int drawHeight = Math.max(32, (int) Math.round(
+                drawWidth * (double) image.getHeight() / image.getWidth()));
+        int drawX = centerX - drawWidth / 2;
         int mountY = baseTopY + Math.max(8, size / 6);
-        int domeW = Math.max(24, size / 3);
-        int domeH = Math.max(16, size / 4);
-        Color accent = playerSide ? new Color(75, 200, 232) : new Color(245, 108, 92);
-        Color metalDark = new Color(36, 46, 56);
-        Color metalLight = level >= 3 ? new Color(236, 186, 74)
-                : (level == 2 ? new Color(165, 186, 198) : new Color(110, 128, 140));
-
-        // Base platform turret
-        g.setColor(metalDark);
-        g.fillRoundRect(centerX - domeW / 2 - 4, mountY - 2, domeW + 8, 8, 4, 4);
-
-        // Barrel meriam mengarah ke medan pertempuran
-        int barrelLen = Math.max(22, size / 3) + (level - 1) * 5;
-        int barrelH = level >= 2 ? 7 : 5;
-        int bx = playerSide ? centerX + 2 : centerX - 2 - barrelLen;
-        int by = mountY - domeH / 2 - barrelH / 2;
-
-        g.setColor(metalDark);
-        g.fillRoundRect(bx - (playerSide ? 0 : 2), by - 1, barrelLen + 2, barrelH + 2, 3, 3);
-        g.setColor(metalLight);
-        g.fillRoundRect(bx, by, barrelLen, barrelH, 2, 2);
-        if (level >= 3) {
-            // Double barrel di Era 3
-            g.fillRoundRect(bx, by - barrelH - 2, barrelLen - 4, barrelH - 1, 2, 2);
+        int drawY = mountY - drawHeight;
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        if (playerSide) {
+            g.drawImage(image, drawX, drawY, drawWidth, drawHeight, null);
+        } else {
+            g.drawImage(image, drawX + drawWidth, drawY, -drawWidth, drawHeight, null);
         }
-
-        // Moncong meriam
-        int muzzleX = playerSide ? bx + barrelLen - 3 : bx - 2;
-        g.setColor(accent);
-        g.fillRect(muzzleX, by - 1, 5, barrelH + 2);
-
-        // Kubah turret
-        g.setColor(metalDark);
-        g.fillArc(centerX - domeW / 2, mountY - domeH, domeW, domeH * 2, 0, 180);
-        g.setColor(accent);
-        g.fillOval(centerX - 4 + dir * 2, mountY - domeH / 2 - 3, 7, 7);
 
         if (firing) {
             Point muzzle = turretMuzzlePoint(centerX, baseTopY, size, playerSide, level);
@@ -262,14 +239,26 @@ final class GameArt {
     }
 
     static Point turretMuzzlePoint(int centerX, int baseTopY, int size, boolean playerSide, int level) {
+        BufferedImage image = turretImage();
+        if (image == null) return new Point(centerX, baseTopY);
+
+        int drawWidth = Math.max(48, (int) Math.round(size * 0.92));
+        int drawHeight = Math.max(32, (int) Math.round(
+                drawWidth * (double) image.getHeight() / image.getWidth()));
         int mountY = baseTopY + Math.max(8, size / 6);
-        int domeH = Math.max(16, size / 4);
-        int barrelLen = Math.max(22, size / 3) + (level - 1) * 5;
-        int barrelH = level >= 2 ? 7 : 5;
-        int bx = playerSide ? centerX + 2 : centerX - 2 - barrelLen;
-        int by = mountY - domeH / 2 - barrelH / 2;
-        int muzzleX = playerSide ? bx + barrelLen - 3 : bx - 2;
-        return new Point(playerSide ? muzzleX + 5 : muzzleX, by + barrelH / 2);
+        int drawX = centerX - drawWidth / 2;
+        int drawY = mountY - drawHeight;
+        int muzzleX = drawX + (int) Math.round(drawWidth * (playerSide ? 0.985 : 0.015));
+        int muzzleY = drawY + (int) Math.round(drawHeight * 0.38);
+        return new Point(muzzleX, muzzleY);
+    }
+
+    private static BufferedImage turretImage() {
+        if (turretImage == null) {
+            BufferedImage source = image("/assets/buildings/turret.png");
+            if (source != null) turretImage = trimTransparent(source);
+        }
+        return turretImage;
     }
 
     private static BufferedImage image(String resourcePath) {

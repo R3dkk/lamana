@@ -92,7 +92,6 @@ public class GamePanel extends JPanel {
         int width = getWidth();
         int height = getHeight();
         drawBackdrop(g, width, height);
-        drawBattleLane(g, width, height);
         drawBases(g, width, height);
         drawUnits(g, width, height);
         drawTurretProjectiles(g, width, height);
@@ -170,54 +169,9 @@ public class GamePanel extends JPanel {
         }
     }
 
-    private void drawBattleLane(Graphics2D g, int width, int height) {
-        int top = (int) (height * .65);
-        int laneLeft = Math.max(66, (int) (width * .075));
-        int laneRight = width - laneLeft;
-        int laneWidth = laneRight - laneLeft;
-
-        g.setColor(new Color(10, 37, 32, 60));
-        g.fillOval(laneLeft - 34, top + 67, laneWidth + 68, 51);
-        g.setPaint(new GradientPaint(0, top + 24, new Color(128, 93, 61),
-                0, top + 88, new Color(79, 54, 42)));
-        g.fillRoundRect(laneLeft, top + 21, laneWidth, 62, 25, 25);
-        g.setColor(new Color(62, 48, 38));
-        g.setStroke(new BasicStroke(2f));
-        g.drawRoundRect(laneLeft, top + 21, laneWidth, 62, 25, 25);
-        g.setColor(new Color(166, 145, 97));
-        g.fillRoundRect(laneLeft + 3, top + 20, laneWidth - 6, 13, 12, 12);
-        g.setColor(new Color(188, 196, 132));
-        g.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1f,
-                new float[]{3f, 10f}, 0f));
-        g.drawLine(laneLeft + 20, top + 52, laneRight - 20, top + 52);
-        g.setStroke(new BasicStroke(1f));
-
-        int divisions = 6;
-        for (int i = 0; i <= divisions; i++) {
-            int tickX = laneLeft + i * laneWidth / divisions;
-            g.setColor(new Color(242, 223, 167, 130));
-            g.drawLine(tickX, top + 87, tickX, top + 95);
-            String marker = Integer.toString((int) Math.round(i * GameConfig.LANE_LENGTH / divisions));
-            g.setFont(new Font("Dialog", Font.BOLD, 9));
-            g.setColor(new Color(227, 226, 192));
-            g.drawString(marker, tickX - 4, top + 108);
-        }
-
-        // Grass lip and small stones to make the path feel part of the scene.
-        g.setColor(new Color(65, 119, 69));
-        g.fillRoundRect(laneLeft + 7, top + 18, laneWidth - 14, 9, 8, 8);
-        g.setColor(new Color(213, 185, 128, 150));
-        for (int i = 0; i < 24; i++) {
-            int pebbleX = laneLeft + 20 + (i * 73) % Math.max(1, laneWidth - 40);
-            int pebbleY = top + 40 + (i % 4) * 11;
-            g.fillOval(pebbleX, pebbleY, 4 + i % 3, 3);
-        }
-    }
-
     private void drawBases(Graphics2D g, int width, int height) {
-        int top = (int) (height * .65);
-        int groundY = top + 93;
-        int baseSize = Math.max(70, Math.min(103, width / 13));
+        int groundY = groundY(height);
+        int baseSize = baseSize(width);
         int leftX = Math.max(66, (int) (width * .055));
         int rightX = width - leftX;
 
@@ -228,13 +182,22 @@ public class GamePanel extends JPanel {
         GameArt.drawBase(g, rightX, groundY, false, baseSize, enemy.getLevel(),
                 animationTimeMs < enemyMuzzleFlashUntilMs);
 
-        int hudTopY = groundY - (int) (baseSize * 1.28) - 26;
-        drawBaseStatus(g, player, leftX, hudTopY, new Color(67, 189, 225));
-        drawBaseStatus(g, enemy, rightX, hudTopY, new Color(245, 109, 97));
+        int hudTopY = groundY - (int) (baseSize * 1.28) - 14;
+        drawBaseStatus(g, player, leftX, hudTopY, baseSize, new Color(67, 189, 225));
+        drawBaseStatus(g, enemy, rightX, hudTopY, baseSize, new Color(245, 109, 97));
     }
 
-    private static void drawBaseStatus(Graphics2D g, Base base, int centerX, int y, Color barColor) {
-        int barW = 82;
+    private static int groundY(int height) {
+        return (int) (height * 0.92);
+    }
+
+    private static int baseSize(int width) {
+        return Math.max(112, Math.min(150, width / 10));
+    }
+
+    private static void drawBaseStatus(Graphics2D g, Base base, int centerX, int y,
+                                       int baseSize, Color barColor) {
+        int barW = Math.max(52, (int) (baseSize * 0.84));
         int barX = centerX - barW / 2;
         int barY = y - 3;
         g.setColor(new Color(22, 34, 37, 210));
@@ -254,14 +217,13 @@ public class GamePanel extends JPanel {
     }
 
     private void drawUnits(Graphics2D g, int width, int height) {
-        int top = (int) (height * .65);
         int laneLeft = Math.max(65, (int) (width * .075)) + 25;
         int laneRight = width - laneLeft;
         int laneWidth = laneRight - laneLeft;
         int size = Math.max(72, Math.min(108, width / 14));
         List<Animal> playerUnits = game.getBattleLane().getPlayerAnimals();
         List<Animal> enemyUnits = game.getBattleLane().getEnemyAnimals();
-        int groundY = top + 90;
+        int groundY = groundY(height);
         Map<Animal, Boolean> active = new IdentityHashMap<>();
         for (Animal animal : playerUnits) registerActiveUnit(animal, true, active);
         for (Animal animal : enemyUnits) registerActiveUnit(animal, false, active);
@@ -284,7 +246,7 @@ public class GamePanel extends JPanel {
             drawVisual(g, animal, unitVisuals.get(animal), laneLeft, laneWidth, groundY, size);
         }
         for (Animal animal : playerUnits) {
-            drawVisual(g, animal, unitVisuals.get(animal), laneLeft, laneWidth, groundY - 4, size);
+            drawVisual(g, animal, unitVisuals.get(animal), laneLeft, laneWidth, groundY, size);
         }
         for (Map.Entry<Animal, UnitVisual> entry : unitVisuals.entrySet()) {
             if (entry.getValue().dead) drawVisual(g, entry.getKey(), entry.getValue(), laneLeft, laneWidth, groundY, size);
@@ -293,16 +255,15 @@ public class GamePanel extends JPanel {
 
     private void drawTurretProjectiles(Graphics2D g, int width, int height) {
         if (turretProjectiles.isEmpty()) return;
-        int top = (int) (height * .65);
-        int baseGroundY = top + 93;
-        int baseSize = Math.max(70, Math.min(103, width / 13));
+        int baseGroundY = groundY(height);
+        int baseSize = baseSize(width);
         int baseLeftX = Math.max(66, (int) (width * .055));
         int baseRightX = width - baseLeftX;
         int baseTopY = baseGroundY - (int) (baseSize * 1.28);
         int laneLeft = Math.max(65, (int) (width * .075)) + 25;
         int laneWidth = width - laneLeft * 2;
         int unitSize = Math.max(72, Math.min(108, width / 14));
-        int targetY = top + 90 - unitSize / 2;
+        int targetY = baseGroundY - unitSize / 2;
 
         Graphics2D shots = (Graphics2D) g.create();
         shots.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
