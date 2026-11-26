@@ -49,7 +49,7 @@ final class GameArt {
         int drawW;
         int drawH;
         if (image != null) {
-            int maxW = (int) (height * 1.25);
+            int maxW = (int) (height * 1.65);
             double scale = Math.min((double) maxW / image.getWidth(), (double) height / image.getHeight());
             drawW = Math.max(16, (int) Math.round(image.getWidth() * scale));
             drawH = Math.max(16, (int) Math.round(image.getHeight() * scale));

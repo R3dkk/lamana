@@ -13,7 +13,7 @@ import lamana.model.animal.AttackContext;
 public class Godzilla extends MeleeAnimal implements SpecialAbility {
 
     public Godzilla() {
-        super("Godzilla", 225, 41, 0, 2, 250, 60, 35, 3);
+        super("Godzilla", 550, 80, 2, 2, 250, 60, 35, 3);
     }
 
     @Override

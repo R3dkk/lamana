@@ -251,29 +251,6 @@ public class BattleLane {
         return nearest;
     }
 
-    /** Returns the opposing animal currently within this unit's attack range, if any. */
-    public Animal getAttackTarget(Animal attacker) {
-        if (attacker == null || attacker.isDefeated()) return null;
-
-        List<Animal> opponents;
-        boolean movingRight;
-        if (playerUnits.contains(attacker)) {
-            opponents = enemyUnits;
-            movingRight = true;
-        } else if (enemyUnits.contains(attacker)) {
-            opponents = playerUnits;
-            movingRight = false;
-        } else {
-            return null;
-        }
-
-        Animal target = findNearestOpponentAhead(attacker, opponents, movingRight);
-        if (target == null || target.isDefeated()) return null;
-        double distance = Math.max(0.0, Math.abs(target.getPosition() - attacker.getPosition())
-                - attacker.getCollisionRadius() - target.getCollisionRadius());
-        return distance <= attacker.getEffectiveRange() ? target : null;
-    }
-
     /**
      * Mengeksekusi serangan unit menggunakan dynamic dispatch polymorphism.
      * Tidak ada "if (a instanceof Ayam)" di sini!

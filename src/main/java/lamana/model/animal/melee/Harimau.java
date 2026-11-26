@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Harimau extends MeleeAnimal implements SpecialAbility {
 
     public Harimau() {
-        super("Harimau", 150, 27, 2, 100, 30, 20, 2);
+        super("Harimau", 220, 38, 2, 100, 30, 20, 2);
     }
 
     @Override
