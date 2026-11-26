@@ -225,8 +225,11 @@ public class GamePanel extends JPanel {
         List<Animal> enemyUnits = game.getBattleLane().getEnemyAnimals();
         int groundY = groundY(height);
         Map<Animal, Boolean> active = new IdentityHashMap<>();
+        Map<Animal, Integer> targetCounts = new IdentityHashMap<>();
         for (Animal animal : playerUnits) registerActiveUnit(animal, true, active);
         for (Animal animal : enemyUnits) registerActiveUnit(animal, false, active);
+        for (Animal attacker : playerUnits) registerTarget(attacker, targetCounts);
+        for (Animal attacker : enemyUnits) registerTarget(attacker, targetCounts);
 
         Iterator<Map.Entry<Animal, UnitVisual>> iterator = unitVisuals.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -251,6 +254,35 @@ public class GamePanel extends JPanel {
         for (Map.Entry<Animal, UnitVisual> entry : unitVisuals.entrySet()) {
             if (entry.getValue().dead) drawVisual(g, entry.getKey(), entry.getValue(), laneLeft, laneWidth, groundY, size);
         }
+        for (Map.Entry<Animal, Integer> entry : targetCounts.entrySet()) {
+            int targetX = positionToScreenX(entry.getKey().getPosition(), laneLeft, laneWidth);
+            drawTargetBadge(g, targetX, groundY - size, entry.getValue());
+        }
+    }
+
+    private void registerTarget(Animal attacker, Map<Animal, Integer> targetCounts) {
+        Animal target = game.getBattleLane().getAttackTarget(attacker);
+        if (target != null) targetCounts.put(target, targetCounts.getOrDefault(target, 0) + 1);
+    }
+
+    private static void drawTargetBadge(Graphics2D g, int centerX, int unitTopY, int attackerCount) {
+        String label = attackerCount > 1 ? "SASARAN x" + attackerCount : "SASARAN";
+        Font oldFont = g.getFont();
+        g.setFont(new Font("Dialog", Font.BOLD, 10));
+        FontMetrics metrics = g.getFontMetrics();
+        int badgeWidth = metrics.stringWidth(label) + 16;
+        int badgeHeight = 18;
+        int x = centerX - badgeWidth / 2;
+        int y = unitTopY - badgeHeight - 5;
+        g.setColor(new Color(34, 28, 12, 225));
+        g.fillRoundRect(x, y, badgeWidth, badgeHeight, 8, 8);
+        g.setColor(new Color(255, 221, 119));
+        g.setStroke(new BasicStroke(1.5f));
+        g.drawRoundRect(x, y, badgeWidth, badgeHeight, 8, 8);
+        g.setColor(new Color(255, 239, 185));
+        g.drawString(label, centerX - metrics.stringWidth(label) / 2,
+                y + (badgeHeight - metrics.getHeight()) / 2 + metrics.getAscent());
+        g.setFont(oldFont);
     }
 
     private void drawTurretProjectiles(Graphics2D g, int width, int height) {

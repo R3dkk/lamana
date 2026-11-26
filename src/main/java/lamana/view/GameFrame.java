@@ -158,7 +158,8 @@ public class GameFrame extends JFrame {
         lastFrameNanos = System.nanoTime();
         gameTimer = new Timer(GameConfig.GAME_LOOP_MS, e -> {
             long now = System.nanoTime();
-            long deltaMs = Math.max(0, (now - lastFrameNanos) / 1_000_000L);
+            long deltaMs = Math.min(GameConfig.MAX_FRAME_DELTA_MS,
+                    Math.max(0, (now - lastFrameNanos) / 1_000_000L));
             lastFrameNanos = now;
             if (!paused) {
                 long simulationDeltaMs = Math.max(0,
