@@ -10,7 +10,6 @@ import lamana.model.animal.melee.Ayam;
 import lamana.model.animal.melee.Godzilla;
 import lamana.model.animal.melee.Harimau;
 import lamana.model.animal.ranged.Landak;
-import lamana.model.animal.ranged.Monyet;
 import lamana.model.animal.ranged.Naga;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +39,7 @@ public class AnimalTest {
         for (int i = 0; i < 200; i++) {
             KuraKura target = new KuraKura();
             int hpAwal = target.getHp();
-            ayam.attack(target, 1.0, ctx);
+            ayam.attack(target, 0.0, ctx);
             int damageDiterima = hpAwal - target.getHp();
 
             if (damageDiterima == 28) {
@@ -62,7 +61,7 @@ public class AnimalTest {
         for (int i = 0; i < 200; i++) {
             KuraKura target = new KuraKura();
             int hpAwal = target.getHp();
-            harimau.attack(target, 1.0, ctx);
+            harimau.attack(target, 0.0, ctx);
             int damageDiterima = hpAwal - target.getHp();
 
             if (damageDiterima == 60) {
@@ -173,7 +172,7 @@ public class AnimalTest {
 
         Ayam target = new Ayam();
         target.setPosition(5.0);
-        badak.attack(target, 1.0, ctx);
+        badak.attack(target, 0.0, ctx);
 
         // Knockback memundurkan target 1 slot: untuk target musuh bertambah ke arah 20.0
         assertEquals(6.0, target.getPosition(), 0.001, "Target harus terdorong mundur 1 unit");

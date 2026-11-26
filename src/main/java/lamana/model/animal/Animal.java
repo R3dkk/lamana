@@ -1,7 +1,6 @@
 package lamana.model.animal;
 
 import lamana.contract.Attackable;
-import lamana.core.GameConfig;
 
 /**
  * Base class abstrak untuk semua unit hewan di arena.
