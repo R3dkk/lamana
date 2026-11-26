@@ -170,9 +170,9 @@ public class GamePanel extends JPanel {
     }
 
     private void drawBases(Graphics2D g, int width, int height) {
-        int groundY = groundY(height);
+        int groundY = baseGroundY(height);
         int baseSize = baseSize(width);
-        int leftX = Math.max(66, (int) (width * .055));
+        int leftX = Math.max(baseSize / 2 + 6, (int) (width * .055));
         int rightX = width - leftX;
 
         Base player = game.getPlayerBase();
@@ -182,17 +182,22 @@ public class GamePanel extends JPanel {
         GameArt.drawBase(g, rightX, groundY, false, baseSize, enemy.getLevel(),
                 animationTimeMs < enemyMuzzleFlashUntilMs);
 
-        int hudTopY = groundY - (int) (baseSize * 1.28) - 14;
+        int hudTopY = groundY - (int) (baseSize * 1.8) - 14;
         drawBaseStatus(g, player, leftX, hudTopY, baseSize, new Color(67, 189, 225));
         drawBaseStatus(g, enemy, rightX, hudTopY, baseSize, new Color(245, 109, 97));
     }
 
-    private static int groundY(int height) {
-        return (int) (height * 0.92);
+    private static int baseGroundY(int height) {
+        return height;
+    }
+
+    private static int unitGroundY(int height) {
+        return (int) (height * 0.96);
     }
 
     private static int baseSize(int width) {
-        return Math.max(112, Math.min(150, width / 10));
+        int normalSize = Math.max(112, Math.min(150, width / 10));
+        return (int) Math.round(normalSize * 1.5);
     }
 
     private static void drawBaseStatus(Graphics2D g, Base base, int centerX, int y,
@@ -223,7 +228,7 @@ public class GamePanel extends JPanel {
         int size = Math.max(72, Math.min(108, width / 14));
         List<Animal> playerUnits = game.getBattleLane().getPlayerAnimals();
         List<Animal> enemyUnits = game.getBattleLane().getEnemyAnimals();
-        int groundY = groundY(height);
+        int groundY = unitGroundY(height);
         Map<Animal, Boolean> active = new IdentityHashMap<>();
         for (Animal animal : playerUnits) registerActiveUnit(animal, true, active);
         for (Animal animal : enemyUnits) registerActiveUnit(animal, false, active);
@@ -255,15 +260,15 @@ public class GamePanel extends JPanel {
 
     private void drawTurretProjectiles(Graphics2D g, int width, int height) {
         if (turretProjectiles.isEmpty()) return;
-        int baseGroundY = groundY(height);
+        int baseGroundY = baseGroundY(height);
         int baseSize = baseSize(width);
-        int baseLeftX = Math.max(66, (int) (width * .055));
+        int baseLeftX = Math.max(baseSize / 2 + 6, (int) (width * .055));
         int baseRightX = width - baseLeftX;
         int baseTopY = baseGroundY - (int) (baseSize * 1.28);
         int laneLeft = Math.max(65, (int) (width * .075)) + 25;
         int laneWidth = width - laneLeft * 2;
         int unitSize = Math.max(72, Math.min(108, width / 14));
-        int targetY = baseGroundY - unitSize / 2;
+        int targetY = unitGroundY(height) - unitSize / 2;
 
         Graphics2D shots = (Graphics2D) g.create();
         shots.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
