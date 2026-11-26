@@ -9,8 +9,11 @@ import lamana.model.animal.Animal;
 import lamana.model.building.Base;
 
 import javax.swing.BorderFactory;
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.KeyStroke;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import java.awt.BorderLayout;
@@ -20,6 +23,7 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +49,7 @@ public class GameFrame extends JFrame {
     private boolean paused;
     private int difficultyIndex = 1;
     private long lastFrameNanos = System.nanoTime();
+    private boolean fastTestingMode;
 
     public GameFrame() {
         super("Animal War");
@@ -59,6 +64,7 @@ public class GameFrame extends JFrame {
         cardsGrid = new JPanel(new GridLayout(1, 3, 6, 0));
 
         setupUI();
+        installTestingShortcuts();
         updateUnitCards();
         applyDifficulty();
         startGameLoop();
@@ -156,7 +162,8 @@ public class GameFrame extends JFrame {
             lastFrameNanos = now;
             if (!paused) {
                 long simulationDeltaMs = Math.max(0,
-                        Math.round(deltaMs * GameConfig.GAME_SPEED_MULTIPLIER));
+                        Math.round(deltaMs * GameConfig.GAME_SPEED_MULTIPLIER
+                                * (fastTestingMode ? 8.0 : 1.0)));
                 game.update(simulationDeltaMs);
                 gamePanel.advanceAnimation(simulationDeltaMs);
             }
@@ -178,12 +185,40 @@ public class GameFrame extends JFrame {
 
     private void restartGame() {
         paused = false;
+        fastTestingMode = false;
         game = new GameController();
         gamePanel.setGame(game);
+        updateTestingTooltip();
         applyDifficulty();
         setPauseIcon(false);
         updateUnitCards();
         refresh();
+    }
+
+    private void installTestingShortcuts() {
+        JComponent root = getRootPane();
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke("F2"), "grant-testing-resources");
+        root.getActionMap().put("grant-testing-resources", new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent event) {
+                if (game.grantTestingResources()) refresh();
+            }
+        });
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke("F3"), "toggle-testing-speed");
+        root.getActionMap().put("toggle-testing-speed", new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent event) {
+                if (game.getState() != GameState.PLAYING) return;
+                fastTestingMode = !fastTestingMode;
+                updateTestingTooltip();
+            }
+        });
+        updateTestingTooltip();
+    }
+
+    private void updateTestingTooltip() {
+        String speed = fastTestingMode ? "aktif (8x)" : "nonaktif";
+        gamePanel.setToolTipText("Testing: F2 = +10.000 uang dan EXP · F3 = kecepatan tinggi " + speed);
     }
 
     private void cycleDifficulty() {

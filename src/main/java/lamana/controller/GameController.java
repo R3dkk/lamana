@@ -148,6 +148,14 @@ public class GameController {
         return success;
     }
 
+    /** Grants extra resources for manual testing. */
+    public boolean grantTestingResources() {
+        if (state != GameState.PLAYING) return false;
+        playerResources.addMoney(10_000);
+        playerResources.gainExp(10_000);
+        return true;
+    }
+
     // Getters
     public EnemyAIController getEnemyAI() { return enemyAI; }
     public Base getPlayerBase() { return playerBase; }
