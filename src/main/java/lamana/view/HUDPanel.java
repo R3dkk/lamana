@@ -1,6 +1,7 @@
 package lamana.view;
 
 import lamana.controller.GameController;
+import lamana.core.GameConfig;
 import lamana.model.building.Base;
 import lamana.model.economy.MoneyExp;
 
@@ -23,6 +24,7 @@ public class HUDPanel extends JPanel {
 
     private final JLabel goldLabel;
     private final JLabel expLabel;
+    private final JLabel armyLabel;
     private final JProgressBar expProgress;
 
     public HUDPanel() {
@@ -35,8 +37,11 @@ public class HUDPanel extends JPanel {
         values.setOpaque(false);
         goldLabel = makeValueLabel("120", UiIcon.Type.GOLD, GOLD);
         expLabel = makeValueLabel("0", UiIcon.Type.EXP, EXP);
+        armyLabel = makeValueLabel("Pasukan 0/5 · Musuh 0/5", null, new Color(189, 207, 194));
+        armyLabel.setToolTipText("Batas pasukan di arena untuk setiap tim");
         values.add(goldLabel);
         values.add(expLabel);
+        values.add(armyLabel);
         add(values, BorderLayout.CENTER);
 
         expProgress = new JProgressBar(0, 1000);
@@ -50,7 +55,7 @@ public class HUDPanel extends JPanel {
     }
 
     private static JLabel makeValueLabel(String value, UiIcon.Type icon, Color color) {
-        JLabel label = new JLabel(value, new UiIcon(icon, color), SwingConstants.LEFT);
+        JLabel label = new JLabel(value, icon == null ? null : new UiIcon(icon, color), SwingConstants.LEFT);
         label.setIconTextGap(6);
         label.setForeground(Color.WHITE);
         label.setFont(new Font("Dialog", Font.BOLD, 13));
@@ -61,6 +66,12 @@ public class HUDPanel extends JPanel {
         if (game == null) return;
         Base player = game.getPlayerBase();
         MoneyExp resources = game.getPlayerResources();
+        int playerCount = game.getBattleLane().getPlayerAnimals().size()
+                + game.getPlayerSpawnQueue().size();
+        int enemyCount = game.getBattleLane().getEnemyAnimals().size();
+        armyLabel.setText(String.format(Locale.ROOT, "Pasukan %d/%d · Musuh %d/%d",
+                playerCount, GameConfig.MAX_UNITS_PER_SIDE,
+                enemyCount, GameConfig.MAX_UNITS_PER_SIDE));
         goldLabel.setText(String.format(Locale.ROOT, "%d", resources.getMoney()));
         goldLabel.setToolTipText(String.format(Locale.ROOT, "Emas · +%d/detik", game.getPassiveIncomePerSecond()));
 

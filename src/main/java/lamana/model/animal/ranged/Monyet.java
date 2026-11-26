@@ -13,7 +13,7 @@ import lamana.model.animal.AttackContext;
 public class Monyet extends RangedAnimal implements SpecialAbility {
 
     public Monyet() {
-        super("Monyet", 150, 26, 5, 2, 100, 35, 22, 2);
+        super("Monyet", 113, 21, 3, 2, 100, 35, 22, 2);
     }
 
     @Override
