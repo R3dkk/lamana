@@ -21,7 +21,7 @@ import java.util.Map;
 final class GameArt {
     private static final Map<String, BufferedImage> IMAGE_CACHE = new HashMap<>();
     private static final Map<String, BufferedImage[]> FRAME_CACHE = new HashMap<>();
-    private static BufferedImage turretImage;
+    private static final Map<Integer, BufferedImage> TURRET_IMAGE_CACHE = new HashMap<>();
     private GameArt() {}
 
     static String assetKey(String value) {
@@ -161,7 +161,8 @@ final class GameArt {
         int x = centerX - width / 2;
         int y = groundY - height;
         String assetName = playerSide ? "player-base" : "enemy-base";
-        BufferedImage image = image("/assets/buildings/" + assetName + ".png");
+        BufferedImage image = image("/assets/buildings/" + assetName + "-level-" + level + ".png");
+        if (image == null) image = image("/assets/buildings/" + assetName + ".png");
 
         if (image != null) {
             g.drawImage(image, x, y, width, height, null);
@@ -207,7 +208,7 @@ final class GameArt {
     private static void drawMountedTurret(Graphics2D g, int centerX, int baseTopY, int size,
                                           boolean playerSide, int level, boolean firing) {
         int dir = playerSide ? 1 : -1;
-        BufferedImage image = turretImage();
+        BufferedImage image = turretImage(level);
         if (image == null) return;
 
         int drawWidth = Math.max(48, (int) Math.round(size * 0.92));
@@ -239,7 +240,7 @@ final class GameArt {
     }
 
     static Point turretMuzzlePoint(int centerX, int baseTopY, int size, boolean playerSide, int level) {
-        BufferedImage image = turretImage();
+        BufferedImage image = turretImage(level);
         if (image == null) return new Point(centerX, baseTopY);
 
         int drawWidth = Math.max(48, (int) Math.round(size * 0.92));
@@ -253,12 +254,14 @@ final class GameArt {
         return new Point(muzzleX, muzzleY);
     }
 
-    private static BufferedImage turretImage() {
-        if (turretImage == null) {
-            BufferedImage source = image("/assets/buildings/turret.png");
-            if (source != null) turretImage = trimTransparent(source);
-        }
-        return turretImage;
+    private static BufferedImage turretImage(int level) {
+        if (TURRET_IMAGE_CACHE.containsKey(level)) return TURRET_IMAGE_CACHE.get(level);
+
+        BufferedImage source = image("/assets/buildings/turret-level-" + level + ".png");
+        if (source == null) source = image("/assets/buildings/turret.png");
+        BufferedImage trimmed = source == null ? null : trimTransparent(source);
+        TURRET_IMAGE_CACHE.put(level, trimmed);
+        return trimmed;
     }
 
     private static BufferedImage image(String resourcePath) {
