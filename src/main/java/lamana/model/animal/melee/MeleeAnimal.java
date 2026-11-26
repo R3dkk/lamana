@@ -15,7 +15,7 @@ public abstract class MeleeAnimal extends Animal {
     protected MeleeAnimal(
             String name, int hp, int damage, int movementSpeed,
             int cost, int rewardMoney, int rewardExp, int requiredBaseLevel) {
-        this(name, hp, damage, 1, movementSpeed, cost, rewardMoney, rewardExp, requiredBaseLevel);
+        this(name, hp, damage, 0, movementSpeed, cost, rewardMoney, rewardExp, requiredBaseLevel);
     }
 
     protected MeleeAnimal(
