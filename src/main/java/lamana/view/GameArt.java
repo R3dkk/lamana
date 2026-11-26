@@ -161,7 +161,7 @@ final class GameArt {
         int x = centerX - width / 2;
         int y = groundY - height;
         String assetName = playerSide ? "player-base" : "enemy-base";
-        BufferedImage image = image("/assets/buildings/" + assetName + "-level-" + level + ".png");
+        BufferedImage image = image("/assets/buildings/" + assetName + "-" + level + ".png");
         if (image == null) image = image("/assets/buildings/" + assetName + ".png");
 
         if (image != null) {
