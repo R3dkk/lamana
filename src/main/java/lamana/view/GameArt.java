@@ -211,11 +211,11 @@ final class GameArt {
         BufferedImage image = turretImage(level);
         if (image == null) return;
 
-        int drawWidth = Math.max(48, (int) Math.round(size * 0.92));
+        int drawWidth = Math.max(42, (int) Math.round(size * 0.64));
         int drawHeight = Math.max(32, (int) Math.round(
                 drawWidth * (double) image.getHeight() / image.getWidth()));
         int drawX = centerX - drawWidth / 2;
-        int mountY = baseTopY + Math.max(8, size / 6);
+        int mountY = baseTopY + Math.max(8, size / 5);
         int drawY = mountY - drawHeight;
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                 RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
@@ -243,10 +243,10 @@ final class GameArt {
         BufferedImage image = turretImage(level);
         if (image == null) return new Point(centerX, baseTopY);
 
-        int drawWidth = Math.max(48, (int) Math.round(size * 0.92));
+        int drawWidth = Math.max(42, (int) Math.round(size * 0.64));
         int drawHeight = Math.max(32, (int) Math.round(
                 drawWidth * (double) image.getHeight() / image.getWidth()));
-        int mountY = baseTopY + Math.max(8, size / 6);
+        int mountY = baseTopY + Math.max(8, size / 5);
         int drawX = centerX - drawWidth / 2;
         int drawY = mountY - drawHeight;
         int muzzleX = drawX + (int) Math.round(drawWidth * (playerSide ? 0.985 : 0.015));
