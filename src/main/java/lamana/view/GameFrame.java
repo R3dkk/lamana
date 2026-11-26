@@ -22,6 +22,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
@@ -31,6 +32,7 @@ import java.util.Locale;
 
 /** Single-window battle screen for Animal War. */
 public class GameFrame extends JFrame {
+    private static final int BUTTON_ICON_SIZE = 28;
     private static final Color BACKGROUND = new Color(17, 25, 28);
     private static final Color PANEL = new Color(22, 32, 34);
     private static final EnemyDifficulty[] DIFFICULTIES = {
@@ -153,7 +155,17 @@ public class GameFrame extends JFrame {
 
     private static Icon buttonIcon(String imageName, UiIcon.Type fallback) {
         java.net.URL resource = GameFrame.class.getResource("/assets/ui/buttons/" + imageName);
-        if (resource != null) return new ImageIcon(resource);
+        if (resource != null) {
+            Image source = new ImageIcon(resource).getImage();
+            int sourceWidth = source.getWidth(null);
+            int sourceHeight = source.getHeight(null);
+            double scale = Math.min((double) BUTTON_ICON_SIZE / sourceWidth,
+                    (double) BUTTON_ICON_SIZE / sourceHeight);
+            int width = Math.max(1, (int) Math.round(sourceWidth * scale));
+            int height = Math.max(1, (int) Math.round(sourceHeight * scale));
+            Image image = source.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            return new ImageIcon(image);
+        }
         return new UiIcon(fallback, new Color(207, 219, 207));
     }
 
