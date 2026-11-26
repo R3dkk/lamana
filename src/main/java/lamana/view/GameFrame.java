@@ -11,21 +11,23 @@ import lamana.model.building.Base;
 import javax.swing.BorderFactory;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /** Single-window battle screen for Animal War. */
 public class GameFrame extends JFrame {
@@ -57,10 +59,16 @@ public class GameFrame extends JFrame {
         hudPanel = new HUDPanel();
         spawnQueuePanel = new SpawnQueuePanel();
         gamePanel = new GamePanel(game);
-        upgradeButton = makeIconButton(UiIcon.Type.UPGRADE, "Upgrade markas");
-        pauseButton = makeIconButton(UiIcon.Type.PAUSE, "Jeda");
-        restartButton = makeIconButton(UiIcon.Type.RESTART, "Mulai ulang");
-        difficultyButton = makeIconButton(UiIcon.Type.DIFFICULTY, "Kesulitan: Normal · klik untuk ubah");
+        upgradeButton = makeIconButton("upgrade.png", UiIcon.Type.UPGRADE, "Upgrade markas");
+        pauseButton = makeIconButton("pause.png", UiIcon.Type.PAUSE, "Jeda");
+        restartButton = makeIconButton("restart.png", UiIcon.Type.RESTART, "Mulai ulang");
+        difficultyButton = makeIconButton("difficulty-normal.png", UiIcon.Type.DIFFICULTY,
+                "Kesulitan: Normal · klik untuk ubah");
+        difficultyButton.setPreferredSize(new Dimension(112, 36));
+        difficultyButton.setContentAreaFilled(false);
+        difficultyButton.setOpaque(false);
+        difficultyButton.setBorderPainted(false);
+        difficultyButton.setBorder(null);
         cardsGrid = new JPanel(new GridLayout(1, 3, 6, 0));
 
         setupUI();
@@ -104,8 +112,12 @@ public class GameFrame extends JFrame {
         cardsGrid.setOpaque(false);
         command.add(cardsGrid, BorderLayout.CENTER);
 
-        JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        JPanel controls = new JPanel(new BorderLayout(0, 4));
         controls.setOpaque(false);
+        JPanel mainControls = new JPanel(new BorderLayout(5, 0));
+        mainControls.setOpaque(false);
+        JPanel transportControls = new JPanel(new GridLayout(1, 2, 5, 0));
+        transportControls.setOpaque(false);
         upgradeButton.addActionListener(e -> {
             if (game.upgradePlayerBase()) updateUnitCards();
             refresh();
@@ -113,16 +125,20 @@ public class GameFrame extends JFrame {
         pauseButton.addActionListener(e -> togglePause());
         restartButton.addActionListener(e -> restartGame());
         difficultyButton.addActionListener(e -> cycleDifficulty());
-        controls.add(upgradeButton);
-        controls.add(difficultyButton);
-        controls.add(pauseButton);
-        controls.add(restartButton);
+        upgradeButton.setText("LEVEL UP");
+        upgradeButton.setPreferredSize(new Dimension(194, 32));
+        transportControls.add(pauseButton);
+        transportControls.add(restartButton);
+        mainControls.add(difficultyButton, BorderLayout.CENTER);
+        mainControls.add(transportControls, BorderLayout.EAST);
+        controls.add(mainControls, BorderLayout.NORTH);
+        controls.add(upgradeButton, BorderLayout.SOUTH);
         command.add(controls, BorderLayout.EAST);
         return command;
     }
 
-    private static JButton makeIconButton(UiIcon.Type type, String tooltip) {
-        JButton button = new JButton(new UiIcon(type, new Color(207, 219, 207)));
+    private static JButton makeIconButton(String imageName, UiIcon.Type fallback, String tooltip) {
+        JButton button = new JButton(buttonIcon(imageName, fallback));
         button.setToolTipText(tooltip);
         button.setFocusPainted(false);
         button.setContentAreaFilled(true);
@@ -133,6 +149,12 @@ public class GameFrame extends JFrame {
         button.setName(tooltip);
         button.getAccessibleContext().setAccessibleName(tooltip);
         return button;
+    }
+
+    private static Icon buttonIcon(String imageName, UiIcon.Type fallback) {
+        java.net.URL resource = GameFrame.class.getResource("/assets/ui/buttons/" + imageName);
+        if (resource != null) return new ImageIcon(resource);
+        return new UiIcon(fallback, new Color(207, 219, 207));
     }
 
     private void updateUnitCards() {
@@ -176,8 +198,8 @@ public class GameFrame extends JFrame {
     private void togglePause() {
         if (game.getState() != GameState.PLAYING) return;
         paused = !paused;
-        pauseButton.setIcon(new UiIcon(paused ? UiIcon.Type.PLAY : UiIcon.Type.PAUSE,
-                new Color(207, 219, 207)));
+        pauseButton.setIcon(buttonIcon(paused ? "play.png" : "pause.png",
+                paused ? UiIcon.Type.PLAY : UiIcon.Type.PAUSE));
         pauseButton.setToolTipText(paused ? "Lanjutkan" : "Jeda");
         pauseButton.getAccessibleContext().setAccessibleName(paused ? "Lanjutkan" : "Jeda");
         gamePanel.setPaused(paused);
@@ -231,15 +253,16 @@ public class GameFrame extends JFrame {
         game.getEnemyAI().setDifficulty(difficulty);
         String tooltip = "Kesulitan: " + difficulty.name().charAt(0)
                 + difficulty.name().substring(1).toLowerCase() + " · klik untuk ubah";
-        difficultyButton.setIcon(new UiIcon(UiIcon.Type.DIFFICULTY,
-                new Color(207, 219, 207), difficultyIndex + 1, 18));
+        difficultyButton.setIcon(buttonIcon("difficulty-"
+                + difficulty.name().toLowerCase(Locale.ROOT) + ".png", UiIcon.Type.DIFFICULTY));
+        difficultyButton.setText("");
         difficultyButton.setToolTipText(tooltip);
         difficultyButton.getAccessibleContext().setAccessibleName(tooltip);
     }
 
     private void setPauseIcon(boolean isPaused) {
-        pauseButton.setIcon(new UiIcon(isPaused ? UiIcon.Type.PLAY : UiIcon.Type.PAUSE,
-                new Color(207, 219, 207)));
+        pauseButton.setIcon(buttonIcon(isPaused ? "play.png" : "pause.png",
+                isPaused ? UiIcon.Type.PLAY : UiIcon.Type.PAUSE));
         pauseButton.setToolTipText(isPaused ? "Lanjutkan" : "Jeda");
         pauseButton.getAccessibleContext().setAccessibleName(isPaused ? "Lanjutkan" : "Jeda");
     }
@@ -252,10 +275,12 @@ public class GameFrame extends JFrame {
         int expNeeded = player.getExpNeededForNextLevel();
         if (expNeeded == 0) {
             upgradeButton.setToolTipText("Upgrade markas · Era maksimum");
+            upgradeButton.setText("MAX LEVEL");
             upgradeButton.setEnabled(false);
         } else {
             upgradeButton.setToolTipText(String.format("Upgrade markas ke Era %d · butuh %d EXP",
                     player.getLevel() + 1, expNeeded));
+            upgradeButton.setText("LEVEL UP");
             upgradeButton.setEnabled(game.getState() == GameState.PLAYING
                     && game.getPlayerResources().getExp() >= expNeeded);
         }
